@@ -7,7 +7,8 @@
       "strict": true,
       "esModuleInterop": true,
       "skipLibCheck": true,
-      "forceConsistentCasingInFileNames": true
+      "forceConsistentCasingInFileNames": true,
+      "jsx": "react"
     },
-    "files": ["src/editor.ts"]
+    "files": ["src/index.tsx", "src/App.tsx"]
   }

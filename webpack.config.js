@@ -8,7 +8,7 @@ const TerserWebpackPlugin = require("terser-webpack-plugin");
 
 module.exports = {
     entry: {
-        editor: __dirname + "/src/editor.ts"
+        index: __dirname + "/src/index.tsx"
     },
     devtool: "source-map",
     output: {
@@ -37,30 +37,42 @@ module.exports = {
         new HtmlWebpackPlugin({
             template: "src/note_ui.html",
             filename: "note_ui.html",
-            chunks: ["editor"],
+            chunks: ["index"],
         }),
         new copyWebpackPlugin({
             patterns: [
-                { from: "src/manifest.json" },
-                {
-                    from: "src/icons/",
-                    to: "icons",
-                    toType: "dir"
-                },
-                {
-                    from: "src/_locales/",
-                    to: "_locales",
-                    toType: "dir"
-                },
-                { from: "node_modules/webextension-polyfill/dist/browser-polyfill.min.js" },
-                { from: "node_modules/webextension-polyfill/dist/browser-polyfill.min.js.map" }
+                { from: "node_modules/quill/dist/quill.min.js", to: "third-party/quill.min.js" },
+                { from: "node_modules/quill/dist/quill.min.js.map", to: "third-party/quill.min.js.map" },
             ]
         })
+        // new copyWebpackPlugin({
+        //     patterns: [
+        //         { from: "src/manifest.json" },
+        //         {
+        //             from: "src/icons/",
+        //             to: "icons",
+        //             toType: "dir"
+        //         },
+        //         {
+        //             from: "src/_locales/",
+        //             to: "_locales",
+        //             toType: "dir"
+        //         },
+        //         { from: "node_modules/webextension-polyfill/dist/browser-polyfill.min.js" },
+        //         { from: "node_modules/webextension-polyfill/dist/browser-polyfill.min.js.map" }
+        //     ]
+        // })
     ],
     externals: {
-        "webextension-polyfill": "browser"
+        "webextension-polyfill": "browser",
+        "quill": "Quill",
+        // "react": "React",
+        // "react-dom": "ReactDOM"
     },
     optimization: {
+        // splitChunks: {
+        //     chunks: "all"
+        // },
         usedExports: true,
         minimizer: [
             new CssMinimizerWebpackPlugin(),
