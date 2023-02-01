@@ -1,16 +1,16 @@
-import React from "react";
+import React, { MutableRefObject, useEffect, useRef } from "react";
 
 import Quill from "quill";
 require("quill/dist/quill.snow.css");
 
-export class Editor extends React.Component {
-    editor: Quill | null = null;
+export function Editor() {
+    const editor: MutableRefObject<null | Quill> = useRef(null);
 
-    componentDidMount(): void {
-        this.editor = new Quill("#editor", {theme: "snow"});
-    }
+    useEffect(() => {
+        editor.current = new Quill("#editor", {theme: "snow"});
+    }, []);
 
-    render(): React.ReactNode {
-        return (<div id="editor"></div>);
-    }
+    return (
+        <div id="editor"></div>
+    );
 }
