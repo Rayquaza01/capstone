@@ -1,0 +1,27 @@
+{
+    "manifest_version": 2,
+    "name": "NT",
+    "version": "1.0.0",
+    "description": "",
+    "applications": {
+        "gecko": {
+            "id": "nt@r01"
+        }
+    },
+    "icons": {
+        "48": "icons/icon-48.png",
+        "96": "icons/icon-96.png"
+    },
+    "permissions": [],
+    "browser_action": {
+        "browser_style": false,
+        "default_popup": "note_ui.html"
+    },
+    "commands": {
+        "_execute_browser_action": {
+            "suggested_key": {
+                "default": "Alt+Shift+A"
+            }
+        }
+    }
+}

@@ -45,7 +45,8 @@ module.exports = (env, argv) => {
                     { from: "node_modules/quill/dist/quill.min.js", to: "third-party/quill.min.js" },
                     { from: "node_modules/quill/dist/quill.min.js.map", to: "third-party/quill.min.js.map" },
                     { from: "node_modules/react/umd/" + (argv.mode === "production" ? "react.production.min.js" : "react.development.js"), to: "third-party/react.js"},
-                    { from: "node_modules/react-dom/umd/" + (argv.mode === "production" ? "react-dom.production.min.js" : "react-dom.development.js"), to: "third-party/react-dom.js"}
+                    { from: "node_modules/react-dom/umd/" + (argv.mode === "production" ? "react-dom.production.min.js" : "react-dom.development.js"), to: "third-party/react-dom.js"},
+                    { from: "src/manifest.json" }
                 ]
             })
             // new copyWebpackPlugin({
