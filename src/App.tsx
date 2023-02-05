@@ -3,10 +3,14 @@ import React from "react";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Container from "@mui/material/Container";
+import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Drawer from "@mui/material/Drawer";
+
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 
 
 import MenuIcon from "@mui/icons-material/Menu";
@@ -31,12 +35,8 @@ const ex1: CategoryStructure = {
             items: ["testing", "123"]
         }
     ],
-    items: [
-        "some",
-        "notes",
-        "here"
-    ]
-}
+    items: ["some", "notes", "here"]
+};
 
 const drawerWidth = 500;
 
@@ -46,9 +46,25 @@ export function App() {
     const [rOpen, setROpen] = React.useState(false);
 
     const [db, setDB] = React.useState(ex1);
+    const [content, setContent] = React.useState("");
+
+    // setTimeout(() => setContent("hello, world"), 5000);
+
+    const [menuOpen, setMenuOpen] = React.useState(false);
+    const [menuAnchor, setMenuAnchor] = React.useState<null | HTMLButtonElement>(null);
+
+    function menuHandleOpen(anchor: HTMLButtonElement) {
+        setMenuOpen(true);
+        setMenuAnchor(anchor);
+    }
+
+    function menuHandleClose() {
+        setMenuOpen(false);
+        setMenuAnchor(null);
+    }
 
     return (
-        <Container maxWidth={false}>
+        <Box>
 
             <AppBar position="static" >
                 <Toolbar>
@@ -67,14 +83,21 @@ export function App() {
             <Drawer open={lOpen} variant="persistent" anchor="left" sx={{ width: drawerWidth, flexShrink: 0, "& .MuiDrawer-paper": { width: drawerWidth, boxSizing: "border-box" } }}>
                 {/* <Typography variant="body1">Uhh...</Typography> */}
                 <Button variant="contained" onClick={() => setLOpen(false)}>Close</Button>
-                <CategoryList item={db} depth={1} />
+                <CategoryList item={db} depth={1} menuOpener={menuHandleOpen} />
             </Drawer>
 
             <Drawer open={rOpen} variant="persistent" anchor="right" sx={{ width: drawerWidth, flexShrink: 0, "& .MuiDrawer-paper": { width: drawerWidth, boxSizing: "border-box" } }}>
                 <Button variant="text" onClick={() => setROpen(false)}>Close</Button>
             </Drawer>
 
-            <Editor />
-        </Container>
+            <Editor content={content} />
+
+            <Menu open={menuOpen} anchorEl={menuAnchor} onClose={menuHandleClose}>
+                <MenuItem onClick={menuHandleClose}>Rename</MenuItem>
+                <MenuItem onClick={menuHandleClose}>Delete</MenuItem>
+                <MenuItem onClick={menuHandleClose}>New Folder</MenuItem>
+                <MenuItem onClick={menuHandleClose}>New Note</MenuItem>
+            </Menu>
+        </Box>
     );
 }
