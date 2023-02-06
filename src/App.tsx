@@ -12,12 +12,13 @@ import Drawer from "@mui/material/Drawer";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 
-
 import MenuIcon from "@mui/icons-material/Menu";
 import SettingsIcon from "@mui/icons-material/Settings";
 
 import { CategoryList } from "./NoteSwitcher";
 import { CategoryStructure } from "./NoteStructure";
+
+import { Settings, SettingsPanel } from "./SettingsPanel";
 
 import { Editor } from "./Editor";
 
@@ -53,6 +54,8 @@ export function App() {
     const [menuOpen, setMenuOpen] = React.useState(false);
     const [menuAnchor, setMenuAnchor] = React.useState<null | HTMLButtonElement>(null);
 
+    const [settings, setSettings] = React.useState<Settings>({fontSize: 16, spellcheck: true, darkMode: false});
+
     function menuHandleOpen(anchor: HTMLButtonElement) {
         setMenuOpen(true);
         setMenuAnchor(anchor);
@@ -61,6 +64,10 @@ export function App() {
     function menuHandleClose() {
         setMenuOpen(false);
         setMenuAnchor(null);
+    }
+
+    function settingsPanelUpdate(newVal: Partial<Settings>) {
+        setSettings({ ...settings, ...newVal });
     }
 
     return (
@@ -87,10 +94,11 @@ export function App() {
             </Drawer>
 
             <Drawer open={rOpen} variant="persistent" anchor="right" sx={{ width: drawerWidth, flexShrink: 0, "& .MuiDrawer-paper": { width: drawerWidth, boxSizing: "border-box" } }}>
-                <Button variant="text" onClick={() => setROpen(false)}>Close</Button>
+                <Button variant="contained" onClick={() => setROpen(false)}>Close</Button>
+                <SettingsPanel settings={settings} setSettings={settingsPanelUpdate} />
             </Drawer>
 
-            <Editor content={content} />
+            <Editor content={content} settings={settings} />
 
             <Menu open={menuOpen} anchorEl={menuAnchor} onClose={menuHandleClose}>
                 <MenuItem onClick={menuHandleClose}>Rename</MenuItem>

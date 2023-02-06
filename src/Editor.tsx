@@ -1,11 +1,13 @@
 import React, { MutableRefObject, useEffect, useRef } from "react";
 
 import Quill, { TextChangeHandler } from "quill";
+import { Settings } from "./SettingsPanel";
 
 require("quill/dist/quill.snow.css");
 
 export interface EditorProps {
     onChange?: TextChangeHandler
+    settings: Settings
     content: string
 }
 
@@ -25,6 +27,6 @@ export function Editor(props: EditorProps) {
     }, [props.content]);
 
     return (
-        <div id="editor"></div>
+        <div id="editor" style={{ height: 500 }}></div>
     );
 }
