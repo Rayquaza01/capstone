@@ -22,6 +22,8 @@ import { Settings, SettingsPanel } from "./SettingsPanel";
 
 import { Editor } from "./Editor";
 
+import { Database } from "./webdb";
+
 const ex1: CategoryStructure = {
     name: "Notebook",
     folders: [
@@ -55,6 +57,8 @@ export function App() {
     const [menuAnchor, setMenuAnchor] = React.useState<null | HTMLButtonElement>(null);
 
     const [settings, setSettings] = React.useState<Settings>({fontSize: 16, spellcheck: true, darkMode: false});
+
+    const [nID, setNID] = React.useState(0);
 
     function menuHandleOpen(anchor: HTMLButtonElement) {
         setMenuOpen(true);
@@ -90,7 +94,7 @@ export function App() {
             <Drawer open={lOpen} variant="persistent" anchor="left" sx={{ width: drawerWidth, flexShrink: 0, "& .MuiDrawer-paper": { width: drawerWidth, boxSizing: "border-box" } }}>
                 {/* <Typography variant="body1">Uhh...</Typography> */}
                 <Button variant="contained" onClick={() => setLOpen(false)}>Close</Button>
-                <CategoryList item={db} depth={1} menuOpener={menuHandleOpen} />
+                {/* <CategoryList item={db} depth={1} menuOpener={menuHandleOpen} /> */}
             </Drawer>
 
             <Drawer open={rOpen} variant="persistent" anchor="right" sx={{ width: drawerWidth, flexShrink: 0, "& .MuiDrawer-paper": { width: drawerWidth, boxSizing: "border-box" } }}>
@@ -98,7 +102,7 @@ export function App() {
                 <SettingsPanel settings={settings} setSettings={settingsPanelUpdate} />
             </Drawer>
 
-            <Editor content={content} settings={settings} />
+            <Editor id={nID} content={content} settings={settings} />
 
             <Menu open={menuOpen} anchorEl={menuAnchor} onClose={menuHandleClose}>
                 <MenuItem onClick={menuHandleClose}>Rename</MenuItem>
