@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
@@ -17,6 +17,8 @@ import SettingsIcon from "@mui/icons-material/Settings";
 
 import { CategoryList } from "./NoteSwitcher";
 import { CategoryStructure } from "./NoteStructure";
+
+import { CreateNoteDialog } from "./CreateNoteDialog";
 
 import { Settings, SettingsPanel } from "./SettingsPanel";
 
@@ -41,6 +43,25 @@ const ex1: CategoryStructure = {
     items: ["some", "notes", "here"]
 };
 
+interface AppBarNameProps {
+    id: number
+}
+
+function AppBarName(props: AppBarNameProps) {
+    const [name, setName] = useState("");
+
+    useEffect(() => {
+        Database.notes.get(props.id).then(res => {
+            if (res !== undefined)
+                setName(res.name);
+        });
+    }, [props.id]);
+
+    return (
+        <Typography variant="h6" flexGrow={1}>{name}</Typography>
+    );
+}
+
 const drawerWidth = 500;
 
 export function App() {
@@ -48,30 +69,46 @@ export function App() {
     const [lOpen, setLOpen] = React.useState(false);
     const [rOpen, setROpen] = React.useState(false);
 
-    const [db, setDB] = React.useState(ex1);
-    const [content, setContent] = React.useState("");
-
     // setTimeout(() => setContent("hello, world"), 5000);
 
     const [menuOpen, setMenuOpen] = React.useState(false);
     const [menuAnchor, setMenuAnchor] = React.useState<null | HTMLButtonElement>(null);
 
-    const [settings, setSettings] = React.useState<Settings>({fontSize: 16, spellcheck: true, darkMode: false});
+    const [newNoteDialogOpen, setNewNoteDialogOpen] = React.useState(false);
 
-    const [nID, setNID] = React.useState(0);
+    const [settings, setSettings] = React.useState<Settings>({fontSize: 16, spellcheck: true, darkMode: false});
+    const [currentID, setCurrentID] = React.useState(0);
 
     function menuHandleOpen(anchor: HTMLButtonElement) {
         setMenuOpen(true);
         setMenuAnchor(anchor);
     }
 
+
     function menuHandleClose() {
         setMenuOpen(false);
         setMenuAnchor(null);
     }
 
+    function newNoteDialogHandleOpen() {
+        menuHandleClose();
+        setNewNoteDialogOpen(true);
+    }
+
+    function newNoteDialogHandleClose() {
+        setNewNoteDialogOpen(false);
+    }
+
     function settingsPanelUpdate(newVal: Partial<Settings>) {
         setSettings({ ...settings, ...newVal });
+    }
+
+    function changeSelection(id: number) {
+        menuHandleClose();
+        setLOpen(false);
+        setROpen(false);
+
+        setCurrentID(id);
     }
 
     return (
@@ -82,9 +119,7 @@ export function App() {
                     <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }} onClick={() => setLOpen(true)}>
                         <MenuIcon />
                     </IconButton>
-                    <Typography variant="h6" flexGrow={1}>
-                        Testing
-                    </Typography>
+                    <AppBarName id={currentID} />
                     <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ ml: 2 }} onClick={() => setROpen(true)}>
                         <SettingsIcon />
                     </IconButton>
@@ -94,7 +129,7 @@ export function App() {
             <Drawer open={lOpen} variant="persistent" anchor="left" sx={{ width: drawerWidth, flexShrink: 0, "& .MuiDrawer-paper": { width: drawerWidth, boxSizing: "border-box" } }}>
                 {/* <Typography variant="body1">Uhh...</Typography> */}
                 <Button variant="contained" onClick={() => setLOpen(false)}>Close</Button>
-                {/* <CategoryList item={db} depth={1} menuOpener={menuHandleOpen} /> */}
+                <CategoryList menuOpener={menuHandleOpen} changeSelection={changeSelection} />
             </Drawer>
 
             <Drawer open={rOpen} variant="persistent" anchor="right" sx={{ width: drawerWidth, flexShrink: 0, "& .MuiDrawer-paper": { width: drawerWidth, boxSizing: "border-box" } }}>
@@ -102,14 +137,14 @@ export function App() {
                 <SettingsPanel settings={settings} setSettings={settingsPanelUpdate} />
             </Drawer>
 
-            <Editor id={nID} content={content} settings={settings} />
+            <Editor id={currentID} settings={settings} />
 
             <Menu open={menuOpen} anchorEl={menuAnchor} onClose={menuHandleClose}>
+                <MenuItem value="new" onClick={newNoteDialogHandleOpen}>New Note</MenuItem>
                 <MenuItem onClick={menuHandleClose}>Rename</MenuItem>
                 <MenuItem onClick={menuHandleClose}>Delete</MenuItem>
-                <MenuItem onClick={menuHandleClose}>New Folder</MenuItem>
-                <MenuItem onClick={menuHandleClose}>New Note</MenuItem>
             </Menu>
+            <CreateNoteDialog open={newNoteDialogOpen} handleClose={newNoteDialogHandleClose} />
         </Box>
     );
 }
