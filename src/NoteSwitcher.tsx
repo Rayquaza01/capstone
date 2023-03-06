@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext, createContext } from "react";
 
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
@@ -7,7 +7,6 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 
 import Collapse from "@mui/material/Collapse";
-import Box from "@mui/material/Box";
 
 import IconButton from "@mui/material/IconButton";
 
@@ -17,113 +16,8 @@ import NoteIcon from "@mui/icons-material/Note";
 import FolderIcon from "@mui/icons-material/Folder";
 import MoreIcon from "@mui/icons-material/MoreVert";
 
-import { CategoryStructure, NoteStructure } from "./NoteStructure";
-
 import { Database, Notebook, Note, EntryTypes } from "./webdb";
 import { useLiveQuery } from "dexie-react-hooks";
-
-export interface NoteSwitcherProps {
-    data: NoteStructure;
-}
-
-// export interface CategoryItemsProps {
-//     open: boolean
-//     item: CategoryStructure
-//     depth: number
-// }
-
-// export function NoteItem(props: Note) {
-//     return <ListItem></ListItem>
-// }
-
-// export function NotebookItem(props: Notebook) {
-//     const [open, setOpen] = React.useState(props.depth === 1);
-
-//     function toggleOpen() {
-//         setOpen(!open);
-//     }
-
-//     const subNotebooks = useLiveQuery(() =>
-//         Database.notebooks.where({ parent: props.id }).sortBy("name")
-//     );
-
-//     const notes = useLiveQuery(() =>
-//         Database.notes.where({ parent: props.id }).sortBy("name")
-//     );
-
-//     return (
-//         <List component="div" disablePadding>
-//             <ListItem>
-//                 <ListItemButton onClick={toggleOpen} key={props.name}>
-//                     <ListItemIcon><FolderIcon htmlColor={props.color} /></ListItemIcon>
-//                     <ListItemText primary={props.name} />
-//                     { open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-//                     <IconButton onClick={showMenu}><MoreIcon /></IconButton>
-//                 </ListItemButton>
-//             </ListItem>
-
-//             <Collapse in={open} timeout="auto">
-//                 <List component="div" disablePadding>
-//                     { subNotebooks?.map(item => <NotebookItem {...item} key={item.name} />) }
-
-//                     { notes?.map(item => <NoteItem {...item} key={item.name} /> }
-//                 </List>
-//             </Collapse>
-//         </List>
-//     );
-// }
-
-// export function CategoryList(props: CategoryListProps) {
-//     const [open, setOpen] = React.useState(props.depth === 1);
-
-//     const notebooks = useLiveQuery(() =>
-//         Database.notebooks.where({ parent: 0 }).sortBy("name")
-//     );
-
-//     function toggleOpen(): void {
-//         setOpen(!open);
-//     }
-
-//     function showMenu(e: React.MouseEvent<HTMLButtonElement>): void {
-//         e.stopPropagation();
-//         props.menuOpener(e.currentTarget);
-//     }
-
-//     return (
-//         <List component="div" disablePadding>
-//             <ListItem disablePadding key={props.item.name}>
-//                 <ListItemButton onClick={toggleOpen} sx={{ pl: props.depth * 2 }}>
-//                     <ListItemIcon><FolderIcon /></ListItemIcon>
-//                     <ListItemText primary={props.item.name} />
-//                     {open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-//                     <IconButton onClick={showMenu}><MoreIcon /></IconButton>
-//                 </ListItemButton>
-//             </ListItem>
-
-//             <Collapse in={open} timeout="auto">
-//                 <List component="div" disablePadding>
-//                     {props.item.folders.map(folder =>
-//                         <CategoryList depth={props.depth + 1} item={folder} key={folder.name} menuOpener={props.menuOpener} />
-//                     )}
-
-//                     {props.item.items.map(note => {
-//                         return (
-//                             <ListItem key={note} disablePadding sx={{ pl: props.depth * 2 }}>
-//                                 <ListItemButton>
-//                                     <ListItemIcon><NoteIcon /></ListItemIcon>
-//                                     <ListItemText primary={note} />
-//                                     <IconButton onClick={showMenu}><MoreIcon /></IconButton>
-//                                 </ListItemButton>
-//                             </ListItem>
-//                         );
-
-//                     })}
-//                 </List>
-//             </Collapse>
-
-//         </List>
-//     );
-// }
 
 /**
  * The properties of a NotebookList
@@ -147,6 +41,8 @@ export interface NotebookListProps {
      * @param entry The db entry associated with the button the user clicked
      */
     menuChangeSelection: (entry: Note | Notebook) => void
+
+    selected: number;
 
     /** The parent to display the children of. Set to -1 for top level */
     parent: number
@@ -175,6 +71,7 @@ export function NotebookList(props: NotebookListProps) {
     }
 
     const notebook = useLiveQuery(() => {
+        if (props.parent === undefined) return;
         return Database.notes.get(props.parent) as Promise<Notebook>;
     });
 
@@ -196,7 +93,7 @@ export function NotebookList(props: NotebookListProps) {
                 (props.parent !== -1) &&
                     <ListItem key={props.parent} disablePadding sx={{ paddingLeft: 2 * props.indentLevel }}>
                         <ListItemButton onClick={() => setOpen(!open)}>
-                            <ListItemIcon><FolderIcon /></ListItemIcon>
+                            <ListItemIcon><FolderIcon style={{ color: notebook?.color }} /></ListItemIcon>
                             <ListItemText primary={notebook?.name} />
                             {open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                             <IconButton onClick={e => showMenu(e, notebook)}><MoreIcon /></IconButton>
@@ -215,8 +112,8 @@ export function NotebookList(props: NotebookListProps) {
                     {
                         notes?.map(item => (
                             <ListItem key={item.id} disablePadding sx={{ paddingLeft: 2 * (props.indentLevel + 1) }}>
-                                <ListItemButton onClick={() => changeSelection(item)}>
-                                    <ListItemIcon><NoteIcon /></ListItemIcon>
+                                <ListItemButton selected={props.selected === item.id} onClick={() => changeSelection(item)}>
+                                    <ListItemIcon><NoteIcon style={{ color: item.color }} /></ListItemIcon>
                                     <ListItemText primary={item.name} />
                                     <IconButton onClick={e => showMenu(e, item)}><MoreIcon /></IconButton>
                                 </ListItemButton>

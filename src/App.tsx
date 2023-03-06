@@ -1,6 +1,7 @@
 import React from "react";
 
 import AppBar from "@mui/material/AppBar";
+import Typography from "@mui/material/Typography";
 import Toolbar from "@mui/material/Toolbar";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
@@ -12,7 +13,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 
 import { NotebookList } from "./NoteSwitcher";
 
-import { CreateNoteDialog, DeleteNoteDialog, RenameNoteDialog, DialogNames } from "./Dialogs";
+import { CreateNoteDialog, DeleteNoteDialog, RenameNoteDialog, DialogNames, MoveNoteDialog } from "./Dialogs";
 import { NoteMenu } from "./NoteMenu";
 
 import { Settings, SettingsPanel } from "./SettingsPanel";
@@ -20,17 +21,25 @@ import { Settings, SettingsPanel } from "./SettingsPanel";
 import { Editor } from "./Editor";
 
 import { EntryTypes, Note, Notebook } from "./webdb";
-import { AppBarName } from "./AppBarName";
 
 const drawerWidth = 500;
 
-const DUMMY: Note = {
+const DUMMY: Notebook = {
     id: -1,
     parent: -1,
-    text: "",
     name: "",
+    color: "#ff0000",
+    type: EntryTypes.FOLDER
+};
+
+const INTRO: Note = {
+    id: -1,
+    parent: -1,
+    name: "Introduction",
+    color: "#ff0000",
+    text: "Introduction text",
     type: EntryTypes.NOTE
-}
+};
 
 export function App() {
     // functions for opening and closing drawers
@@ -57,10 +66,10 @@ export function App() {
     }
 
     // DIALOG STATES
-    const [dialogEntry, setDialogEntry] = React.useState<Note | Notebook | null>(null);
     const [newNoteDialogOpen, setNewNoteDialogOpen] = React.useState(false);
     const [renameNoteDialogOpen, setRenameNoteDialogOpen] = React.useState(false);
     const [deleteNoteDialogOpen, setDeleteNoteDialogOpen] = React.useState(false);
+    const [moveNoteDialogOpen, setMoveNoteDialogOpen] = React.useState(false);
     function dialogHandleOpen(dialog: DialogNames) {
         switch (dialog) {
             case DialogNames.NEW:
@@ -71,6 +80,9 @@ export function App() {
                 break;
             case DialogNames.DELETE:
                 setDeleteNoteDialogOpen(true);
+                break;
+            case DialogNames.MOVE:
+                setMoveNoteDialogOpen(true);
                 break;
         }
 
@@ -88,11 +100,14 @@ export function App() {
             case DialogNames.DELETE:
                 setDeleteNoteDialogOpen(false);
                 break;
+            case DialogNames.MOVE:
+                setMoveNoteDialogOpen(false);
+                break;
         }
     }
 
     const [settings, setSettings] = React.useState<Settings>({fontSize: 16, spellcheck: true, darkMode: false});
-    const [currentEntry, setCurrentEntry] = React.useState<Note | Notebook>();
+    const [currentEntry, setCurrentEntry] = React.useState<Note | Notebook>(INTRO);
 
     function settingsPanelUpdate(newVal: Partial<Settings>) {
         setSettings({ ...settings, ...newVal });
@@ -109,12 +124,12 @@ export function App() {
     return (
         <Box>
 
-            <AppBar position="static" >
+            <AppBar position="static" style={{ backgroundColor: currentEntry.color }}>
                 <Toolbar>
                     <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }} onClick={() => setLOpen(true)}>
                         <MenuIcon />
                     </IconButton>
-                    <AppBarName id={currentEntry?.id ?? -1} />
+                    <Typography variant="h6" flexGrow={1}>{currentEntry.name}</Typography>
                     <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ ml: 2 }} onClick={() => setROpen(true)}>
                         <SettingsIcon />
                     </IconButton>
@@ -124,7 +139,7 @@ export function App() {
             <Drawer open={lOpen} variant="persistent" anchor="left" sx={{ width: drawerWidth, flexShrink: 0, "& .MuiDrawer-paper": { width: drawerWidth, boxSizing: "border-box" } }}>
                 {/* <Typography variant="body1">Uhh...</Typography> */}
                 <Button variant="contained" onClick={() => setLOpen(false)}>Close</Button>
-                <NotebookList menuOpener={menuHandleOpen} changeSelection={changeSelection} menuChangeSelection={menuChangeSelection} parent={-1} indentLevel={0} />
+                <NotebookList menuOpener={menuHandleOpen} changeSelection={changeSelection} menuChangeSelection={menuChangeSelection} selected={currentEntry.id} parent={-1} indentLevel={-1} />
             </Drawer>
 
             <Drawer open={rOpen} variant="persistent" anchor="right" sx={{ width: drawerWidth, flexShrink: 0, "& .MuiDrawer-paper": { width: drawerWidth, boxSizing: "border-box" } }}>
@@ -134,10 +149,11 @@ export function App() {
 
             <Editor id={currentEntry?.id} settings={settings} />
 
-            <NoteMenu open={menuOpen} openDialog={dialogHandleOpen} anchor={menuAnchor} handleClose={() => setMenuOpen(false)} />
-            <CreateNoteDialog open={newNoteDialogOpen} handleClose={dialogHandleClose} />
+            <NoteMenu open={menuOpen} openDialog={dialogHandleOpen} anchor={menuAnchor} handleClose={() => setMenuOpen(false)} selected={menuSelected.type} />
+            <CreateNoteDialog open={newNoteDialogOpen} handleClose={dialogHandleClose} entry={menuSelected} />
             <RenameNoteDialog open={renameNoteDialogOpen} handleClose={dialogHandleClose} entry={menuSelected} />
             <DeleteNoteDialog open={deleteNoteDialogOpen} handleClose={dialogHandleClose} entry={menuSelected} />
+            <MoveNoteDialog open={moveNoteDialogOpen} handleClose={dialogHandleClose} entry={menuSelected} />
         </Box>
     );
 }

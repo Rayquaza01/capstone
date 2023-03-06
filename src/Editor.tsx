@@ -41,7 +41,7 @@ export function Editor(props: EditorProps) {
         setContent(value);
         console.log(delta);
 
-        if (props.id === undefined) return;
+        if (props.id === undefined || props.id < 0) return;
 
         if (source === "user") {
             console.log(value);
