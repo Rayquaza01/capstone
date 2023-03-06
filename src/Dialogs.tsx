@@ -5,31 +5,40 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
 
 import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
 import TextField from "@mui/material/TextField";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+
+import Circle from "@mui/icons-material/Circle";
+
 import React, { useEffect, useState } from "react";
 
 import { Database, EntryTypes, Note, Notebook } from "./webdb";
+import { useLiveQuery } from "dexie-react-hooks";
 
 export enum DialogNames {
     NEW,
     RENAME,
-    DELETE
+    DELETE,
+    MOVE
 }
 
 export interface DialogProps {
     open: boolean
     handleClose: (dialog: DialogNames) => void
-}
-
-export interface ModifyDialogProps extends DialogProps {
     entry: Note | Notebook
 }
 
 export function CreateNoteDialog(props: DialogProps) {
     const [name, setName] = useState("");
+    const [color, setColor] = useState("#ff0000");
+    const [type, setType] = useState<EntryTypes | string>(EntryTypes.NOTE);
 
     useEffect(() => {
         setName("");
+        // inherit color from parent
+        setColor(props.entry.color);
     }, [props.open]);
 
     function handleClose() {
@@ -39,28 +48,48 @@ export function CreateNoteDialog(props: DialogProps) {
     function createNewNote() {
         if (name === "") return;
 
-        Database.notes.put({name: name, parent: 0, text: "", type: EntryTypes.NOTE});
+        if (typeof props.entry.id !== "number") return;
+
+        switch (type) {
+            case EntryTypes.NOTE:
+                Database.notes.put({ name, parent: props.entry.id, text: "", color, type });
+                break;
+            case EntryTypes.FOLDER:
+                Database.notes.put({ name, parent: props.entry.id, color, type });
+                break;
+        }
         handleClose();
     }
 
     return (
         <Dialog open={props.open} onClose={props.handleClose} aria-labelledby="new-note-title">
             <DialogTitle id="new-note-title">Create a new note</DialogTitle>
-            <DialogContent><TextField autoFocus label="New Note Name" variant="standard" type="text" value={name} onChange={e => setName(e.target.value)} /></DialogContent>
+            <DialogContent>
+                <TextField autoFocus label="New Note Name" variant="standard" type="text" value={name} onChange={e => setName(e.target.value)} />
+                <IconButton aria-label="Color" onClick={() => (document.querySelector("#newNoteColor") as HTMLInputElement).click()}><Circle style={{ color }} /></IconButton>
+                <Select label="Type" value={type} onChange={(e) => setType(e.target.value) }>
+                    <MenuItem value={EntryTypes.NOTE}>Note</MenuItem>
+                    <MenuItem value={EntryTypes.FOLDER}>Folder</MenuItem>
+                </Select>
+            </DialogContent>
 
             <DialogActions>
                 <Button onClick={handleClose}>Cancel</Button>
                 <Button onClick={createNewNote}>OK</Button>
             </DialogActions>
+
+            <input type="color" id="newNoteColor" value={color} onChange={(e) => setColor(e.target.value)} style={{ display: "none" }} />
         </Dialog>
     );
 }
 
-export function RenameNoteDialog(props: ModifyDialogProps) {
+export function RenameNoteDialog(props: DialogProps) {
     const [name, setName] = useState("");
+    const [color, setColor] = useState("#ff0000");
 
     useEffect(() => {
         setName(props.entry.name);
+        setColor(props.entry.color);
     }, [props.entry.name]);
 
     // useEffect(() => {
@@ -75,7 +104,7 @@ export function RenameNoteDialog(props: ModifyDialogProps) {
         if (name === "") return;
 
         if (typeof props.entry.id === "number") {
-            Database.notes.update(props.entry?.id, { name });
+            Database.notes.update(props.entry?.id, { name, color });
         }
         handleClose();
     }
@@ -83,17 +112,22 @@ export function RenameNoteDialog(props: ModifyDialogProps) {
     return (
         <Dialog open={props.open} onClose={props.handleClose} aria-labelledby="rename-note-title">
             <DialogTitle id="rename-note-title">Rename "{props.entry.name}"</DialogTitle>
-            <DialogContent><TextField autoFocus label="Note Name" variant="standard" type="text" value={name} onChange={e => setName(e.target.value)} /></DialogContent>
+            <DialogContent>
+                <TextField autoFocus label="Note Name" variant="standard" type="text" value={name} onChange={e => setName(e.target.value)} />
+                <IconButton aria-label="Color" onClick={() => (document.querySelector("#renameNoteColor") as HTMLInputElement).click()}><Circle style={{ color }} /></IconButton>
+            </DialogContent>
 
             <DialogActions>
                 <Button onClick={handleClose}>Cancel</Button>
                 <Button onClick={rename}>OK</Button>
             </DialogActions>
+
+            <input type="color" id="renameNoteColor" value={color} onChange={(e) => setColor(e.target.value)} style={{ display: "none" }} />
         </Dialog>
     );
 }
 
-export function DeleteNoteDialog(props: ModifyDialogProps) {
+export function DeleteNoteDialog(props: DialogProps) {
     function handleClose() {
         props.handleClose(DialogNames.DELETE);
     }
@@ -115,6 +149,46 @@ export function DeleteNoteDialog(props: ModifyDialogProps) {
             <DialogActions>
                 <Button onClick={handleClose}>Cancel</Button>
                 <Button onClick={deleteNote}>Delete</Button>
+            </DialogActions>
+        </Dialog>
+    );
+}
+
+export function MoveNoteDialog(props: DialogProps) {
+    const [parent, setParent] = useState(-1);
+
+    useEffect(() => {
+        setParent(props.entry.parent);
+    }, [props.entry]);
+
+    const folders = useLiveQuery(() => {
+        return Database.notes.where({ type: EntryTypes.FOLDER }).sortBy("parent");
+    });
+
+    function handleClose() {
+        props.handleClose(DialogNames.MOVE);
+    }
+
+    function moveNote() {
+        if (typeof props.entry.id === "number") {
+            Database.notes.update(props.entry.id, { parent });
+        }
+        handleClose();
+    }
+
+    return (
+        <Dialog open={props.open} onClose={props.handleClose} aria-labelledby="move-note-title">
+            <DialogTitle id="move-note-title">Move "{props.entry.name}" to where?</DialogTitle>
+            <DialogContent>
+                <Select value={parent} onChange={(e) => setParent(e.target.value as number)}>
+                    <MenuItem key={-1} value={-1}>Top Level</MenuItem>
+                    { folders?.map(item => <MenuItem key={item.id} value={item.id}>{item.name}</MenuItem>) }
+                </Select>
+            </DialogContent>
+
+            <DialogActions>
+                <Button onClick={handleClose}>Cancel</Button>
+                <Button onClick={moveNote}>Delete</Button>
             </DialogActions>
         </Dialog>
     );
