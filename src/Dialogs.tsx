@@ -8,7 +8,7 @@ import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import React, { useEffect, useState } from "react";
 
-import { Database } from "./webdb";
+import { Database, EntryTypes, Note, Notebook } from "./webdb";
 
 export enum DialogNames {
     NEW,
@@ -19,6 +19,10 @@ export enum DialogNames {
 export interface DialogProps {
     open: boolean
     handleClose: (dialog: DialogNames) => void
+}
+
+export interface ModifyDialogProps extends DialogProps {
+    entry: Note | Notebook
 }
 
 export function CreateNoteDialog(props: DialogProps) {
@@ -35,7 +39,7 @@ export function CreateNoteDialog(props: DialogProps) {
     function createNewNote() {
         if (name === "") return;
 
-        Database.notes.put({name: name, parent: 0, text: ""});
+        Database.notes.put({name: name, parent: 0, text: "", type: EntryTypes.NOTE});
         handleClose();
     }
 
@@ -52,17 +56,16 @@ export function CreateNoteDialog(props: DialogProps) {
     );
 }
 
-export interface ModifyDialogProps extends DialogProps {
-    id: number
-    name: string
-}
-
 export function RenameNoteDialog(props: ModifyDialogProps) {
     const [name, setName] = useState("");
 
     useEffect(() => {
-        setName("");
-    }, [props.open]);
+        setName(props.entry.name);
+    }, [props.entry.name]);
+
+    // useEffect(() => {
+    //     setName("");
+    // }, [props.open]);
 
     function handleClose() {
         props.handleClose(DialogNames.RENAME);
@@ -71,13 +74,15 @@ export function RenameNoteDialog(props: ModifyDialogProps) {
     function rename() {
         if (name === "") return;
 
-        Database.notes.update(props.id, { name });
+        if (typeof props.entry.id === "number") {
+            Database.notes.update(props.entry?.id, { name });
+        }
         handleClose();
     }
 
     return (
         <Dialog open={props.open} onClose={props.handleClose} aria-labelledby="rename-note-title">
-            <DialogTitle id="rename-note-title">Rename "{props.name}"</DialogTitle>
+            <DialogTitle id="rename-note-title">Rename "{props.entry.name}"</DialogTitle>
             <DialogContent><TextField autoFocus label="Note Name" variant="standard" type="text" value={name} onChange={e => setName(e.target.value)} /></DialogContent>
 
             <DialogActions>
@@ -94,20 +99,22 @@ export function DeleteNoteDialog(props: ModifyDialogProps) {
     }
 
     function deleteNote() {
-        Database.notes.delete(props.id);
+        if (typeof props.entry.id === "number") {
+            Database.notes.delete(props.entry.id);
+        }
         handleClose();
     }
 
     return (
         <Dialog open={props.open} onClose={props.handleClose} aria-labelledby="delete-note-title">
-            <DialogTitle id="delete-note-title">Delete "{props.name}"?</DialogTitle>
+            <DialogTitle id="delete-note-title">Delete "{props.entry.name}"?</DialogTitle>
             <DialogContent>
-                <DialogContentText>Are you sure you want to delete this note? This action cannot be undone</DialogContentText>
+                <DialogContentText>Are you sure you want to delete this note? This action cannot be undone.</DialogContentText>
             </DialogContent>
 
             <DialogActions>
                 <Button onClick={handleClose}>Cancel</Button>
-                <Button onClick={deleteNote}>OK</Button>
+                <Button onClick={deleteNote}>Delete</Button>
             </DialogActions>
         </Dialog>
     );

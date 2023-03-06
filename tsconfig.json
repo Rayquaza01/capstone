@@ -10,5 +10,5 @@
       "forceConsistentCasingInFileNames": true,
       "jsx": "react"
     },
-    "files": ["src/index.tsx", "src/App.tsx"]
+    "files": ["src/index.tsx", "src/App.tsx", "./src/AppBarName.tsx"]
   }
