@@ -71,7 +71,6 @@ export function NotebookList(props: NotebookListProps) {
     }
 
     const notebook = useLiveQuery(() => {
-        if (props.parent === undefined) return;
         return Database.notes.get(props.parent) as Promise<Notebook>;
     });
 
@@ -82,10 +81,6 @@ export function NotebookList(props: NotebookListProps) {
     const notes = useLiveQuery(() => {
         return Database.notes.where({ parent: props.parent, type: EntryTypes.NOTE }).sortBy("name");
     });
-
-    useEffect(() => {
-        console.log(props.parent);
-    }, []);
 
     return (
         <List component="div" disablePadding>
@@ -124,4 +119,52 @@ export function NotebookList(props: NotebookListProps) {
             </Collapse>
         </List>
     );
+}
+
+/**
+ * The properties of MoveNoteList. Similar to NotebookList
+ */
+export interface MoveNoteListProps {
+    /**
+     * Changes which entry is currently selected for the title and editor
+     * @param entry The db entry associated with the button the user clicked
+     */
+    changeSelection: (id: number) => void
+
+    disallowed: number
+
+    selected: number;
+
+    /** The parent to display the children of. Set to -1 for top level */
+    parent: number
+    /** The level of indentation to use */
+    indentLevel: number
+}
+
+export function MoveNoteList(props: MoveNoteListProps) {
+    const notebook = useLiveQuery(() => {
+        return Database.notes.get(props.parent) as Promise<Notebook>;
+    });
+
+    const subNotebooks = useLiveQuery(() => {
+        return Database.notes.where({ parent: props.parent, type: EntryTypes.FOLDER }).sortBy("name");
+    });
+
+    return (
+        <List component="div" disablePadding>
+            <ListItem key={props.parent} disablePadding sx={{ paddingLeft: 2 * props.indentLevel }}>
+                <ListItemButton onClick={() => props.changeSelection(notebook?.id ?? -1)} selected={props.selected === notebook?.id ?? -1}>
+                    <ListItemIcon><FolderIcon style={{ color: notebook?.color }} /></ListItemIcon>
+                    <ListItemText primary={notebook?.name ?? "Top Level"} />
+                </ListItemButton>
+            </ListItem>
+            {
+                subNotebooks?.map(item => {
+                    if (typeof item.id === "number" && item.id !== props.disallowed)
+                        return <MoveNoteList {...props} parent={item.id} indentLevel={props.indentLevel + 1} key={item.id} />;
+                })
+            }
+        </List>
+    );
+
 }

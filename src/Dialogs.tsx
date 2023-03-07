@@ -15,6 +15,8 @@ import Circle from "@mui/icons-material/Circle";
 import React, { useEffect, useState } from "react";
 
 import { Database, EntryTypes, Note, Notebook } from "./webdb";
+import { MoveNoteList } from "./NoteSwitcher";
+
 import { useLiveQuery } from "dexie-react-hooks";
 
 export enum DialogNames {
@@ -155,15 +157,15 @@ export function DeleteNoteDialog(props: DialogProps) {
 }
 
 export function MoveNoteDialog(props: DialogProps) {
-    const [parent, setParent] = useState(-1);
+    const [selected, setSelected] = useState(-1);
 
     useEffect(() => {
-        setParent(props.entry.parent);
+        setSelected(props.entry.parent);
     }, [props.entry]);
 
-    const folders = useLiveQuery(() => {
-        return Database.notes.where({ type: EntryTypes.FOLDER }).sortBy("parent");
-    });
+    function changeSelection(id: number) {
+        setSelected(id);
+    }
 
     function handleClose() {
         props.handleClose(DialogNames.MOVE);
@@ -171,7 +173,7 @@ export function MoveNoteDialog(props: DialogProps) {
 
     function moveNote() {
         if (typeof props.entry.id === "number") {
-            Database.notes.update(props.entry.id, { parent });
+            Database.notes.update(props.entry.id, { parent: selected });
         }
         handleClose();
     }
@@ -180,15 +182,12 @@ export function MoveNoteDialog(props: DialogProps) {
         <Dialog open={props.open} onClose={props.handleClose} aria-labelledby="move-note-title">
             <DialogTitle id="move-note-title">Move "{props.entry.name}" to where?</DialogTitle>
             <DialogContent>
-                <Select value={parent} onChange={(e) => setParent(e.target.value as number)}>
-                    <MenuItem key={-1} value={-1}>Top Level</MenuItem>
-                    { folders?.map(item => <MenuItem key={item.id} value={item.id}>{item.name}</MenuItem>) }
-                </Select>
+                <MoveNoteList parent={-1} indentLevel={0} changeSelection={changeSelection} selected={selected} disallowed={props.entry.id ?? -2} />
             </DialogContent>
 
             <DialogActions>
                 <Button onClick={handleClose}>Cancel</Button>
-                <Button onClick={moveNote}>Delete</Button>
+                <Button onClick={moveNote}>Move</Button>
             </DialogActions>
         </Dialog>
     );
