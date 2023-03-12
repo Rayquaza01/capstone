@@ -8,6 +8,8 @@ import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import TextField from "@mui/material/TextField";
 import Select from "@mui/material/Select";
+import InputLabel from "@mui/material/InputLabel";
+import FormControl from "@mui/material/FormControl";
 import MenuItem from "@mui/material/MenuItem";
 
 import Circle from "@mui/icons-material/Circle";
@@ -16,8 +18,6 @@ import React, { useEffect, useState } from "react";
 
 import { Database, EntryTypes, Note, Notebook } from "./webdb";
 import { MoveNoteList } from "./NoteSwitcher";
-
-import { useLiveQuery } from "dexie-react-hooks";
 
 export enum DialogNames {
     NEW,
@@ -68,11 +68,14 @@ export function CreateNoteDialog(props: DialogProps) {
             <DialogTitle id="new-note-title">Create a new note</DialogTitle>
             <DialogContent>
                 <TextField autoFocus label="New Note Name" variant="standard" type="text" value={name} onChange={e => setName(e.target.value)} />
+                <FormControl>
+                    <InputLabel id="create-dialog-type-label">Type</InputLabel>
+                    <Select label="Type" labelId="create-dialog-type-label" value={type} onChange={(e) => setType(e.target.value) } variant="standard">
+                        <MenuItem value={EntryTypes.NOTE}>Note</MenuItem>
+                        <MenuItem value={EntryTypes.FOLDER}>Folder</MenuItem>
+                    </Select>
+                </FormControl>
                 <IconButton aria-label="Color" onClick={() => (document.querySelector("#newNoteColor") as HTMLInputElement).click()}><Circle style={{ color }} /></IconButton>
-                <Select label="Type" value={type} onChange={(e) => setType(e.target.value) }>
-                    <MenuItem value={EntryTypes.NOTE}>Note</MenuItem>
-                    <MenuItem value={EntryTypes.FOLDER}>Folder</MenuItem>
-                </Select>
             </DialogContent>
 
             <DialogActions>
@@ -136,7 +139,7 @@ export function DeleteNoteDialog(props: DialogProps) {
 
     function deleteNote() {
         if (typeof props.entry.id === "number") {
-            Database.notes.delete(props.entry.id);
+            Database.deleteFolder(props.entry.id);
         }
         handleClose();
     }
