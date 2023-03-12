@@ -44,9 +44,19 @@ export class NTDatabase extends Dexie {
         });
     }
 
-    // async getTree() {
-    //     const tree = this.notes.where({ type: EntryTypes.FOLDER })
-    // }
+    /**
+     * Deletes a notebook and all children/grandchildren
+     * @param id The id to delete
+     */
+    deleteFolder(id?: number) {
+        if (id && id > -1) {
+            this.notes.where({ parent: id }).each(obj => {
+                if (obj.type === EntryTypes.FOLDER)
+                    this.deleteFolder(obj.id);
+            });
+            this.notes.delete(id);
+        }
+    }
 }
 
 export const Database = new NTDatabase();
