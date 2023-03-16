@@ -6,7 +6,7 @@ import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 
 import { Settings } from "./SettingsPanel";
-import { Database, EntryTypes } from "./webdb";
+import { Database } from "./webdb";
 
 require("quill/dist/quill.snow.css");
 
@@ -45,17 +45,23 @@ export function Editor(props: EditorProps) {
 
         if (source === "user") {
             console.log(value);
-            Database.notes.update(props.id, { text: value });
+            Database.noteData.update(props.id, { text: value });
         }
     }
 
     useEffect(() => {
-        if (props.id === undefined) return;
+        if (props.id === undefined || props.id < 0) {
+            setContent("Please select or create a note.");
+            return;
+        }
 
-        Database.notes.get(props.id).then((value) => {
-            if (value?.type === EntryTypes.NOTE) {
-                setContent(value.text ?? "");
+        Database.noteData.get(props.id).then((value) => {
+            console.log("DB text record", value);
+            if (value === undefined) {
+                setContent("");
+                return;
             }
+            setContent(value.text);
         });
     }, [props.id]);
 
@@ -64,6 +70,6 @@ export function Editor(props: EditorProps) {
     }, [props.settings.spellcheck]);
 
     return (
-        <ReactQuill onChange={updateDB} value={content} />
+        <ReactQuill onChange={updateDB} value={content} style={{height: "250px"}} />
     );
 }

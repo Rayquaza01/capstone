@@ -16,7 +16,7 @@ import NoteIcon from "@mui/icons-material/Note";
 import FolderIcon from "@mui/icons-material/Folder";
 import MoreIcon from "@mui/icons-material/MoreVert";
 
-import { Database, Notebook, Note, EntryTypes } from "./webdb";
+import { Database, DBEntry, EntryTypes } from "./webdb";
 import { useLiveQuery } from "dexie-react-hooks";
 
 /**
@@ -34,13 +34,13 @@ export interface NotebookListProps {
      * Changes which entry is currently selected for the title and editor
      * @param entry The db entry associated with the button the user clicked
      */
-    changeSelection: (entry: Note | Notebook) => void
+    changeSelection: (entry: DBEntry) => void
 
     /**
      * Changes which entry is currently selected for the menu and dialogs
      * @param entry The db entry associated with the button the user clicked
      */
-    menuChangeSelection: (entry: Note | Notebook) => void
+    menuChangeSelection: (entry: DBEntry) => void
 
     selected: number;
 
@@ -58,7 +58,7 @@ export interface NotebookListProps {
 export function NotebookList(props: NotebookListProps) {
     const [open, setOpen] = useState(true);
 
-    function showMenu(e: React.MouseEvent<HTMLButtonElement>, entry?: Note | Notebook): void {
+    function showMenu(e: React.MouseEvent<HTMLButtonElement>, entry?: DBEntry): void {
         e.stopPropagation();
 
         if (entry === undefined) return;
@@ -66,12 +66,12 @@ export function NotebookList(props: NotebookListProps) {
         props.menuChangeSelection(entry);
     }
 
-    function changeSelection(entry: Note | Notebook) {
+    function changeSelection(entry: DBEntry) {
         props.changeSelection(entry);
     }
 
     const notebook = useLiveQuery(() => {
-        return Database.notes.get(props.parent) as Promise<Notebook>;
+        return Database.notes.get(props.parent) as Promise<DBEntry>;
     });
 
     const subNotebooks = useLiveQuery(() => {
@@ -143,7 +143,7 @@ export interface MoveNoteListProps {
 
 export function MoveNoteList(props: MoveNoteListProps) {
     const notebook = useLiveQuery(() => {
-        return Database.notes.get(props.parent) as Promise<Notebook>;
+        return Database.notes.get(props.parent) as Promise<DBEntry>;
     });
 
     const subNotebooks = useLiveQuery(() => {

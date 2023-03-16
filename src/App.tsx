@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 import AppBar from "@mui/material/AppBar";
 import Typography from "@mui/material/Typography";
@@ -10,6 +10,7 @@ import Drawer from "@mui/material/Drawer";
 
 import MenuIcon from "@mui/icons-material/Menu";
 import SettingsIcon from "@mui/icons-material/Settings";
+import AddIcon from "@mui/icons-material/Add";
 
 import { NotebookList } from "./NoteSwitcher";
 
@@ -20,24 +21,26 @@ import { Settings, SettingsPanel } from "./SettingsPanel";
 
 import { Editor } from "./Editor";
 
-import { EntryTypes, Note, Notebook } from "./webdb";
+import { EntryTypes, DBEntry } from "./webdb";
+
+import { Database } from "./webdb";
+import { useLiveQuery } from "dexie-react-hooks";
 
 const drawerWidth = 500;
 
-const DUMMY: Notebook = {
+const DUMMY: DBEntry = {
     id: -1,
     parent: -1,
     name: "",
-    color: "#ff0000",
+    color: "#1976D2",
     type: EntryTypes.FOLDER
 };
 
-const INTRO: Note = {
+const INTRO: DBEntry = {
     id: -1,
     parent: -1,
-    name: "Introduction",
-    color: "#ff0000",
-    text: "Introduction text",
+    name: "No Note Selected",
+    color: "#1976D2",
     type: EntryTypes.NOTE
 };
 
@@ -49,8 +52,8 @@ export function App() {
     // MENU STATES
     const [menuOpen, setMenuOpen] = React.useState(false);
     const [menuAnchor, setMenuAnchor] = React.useState<null | HTMLButtonElement>(null);
-    const [menuSelected, setMenuSelected] = React.useState<Note | Notebook>(DUMMY);
-    function menuChangeSelection(entry: Note | Notebook) {
+    const [menuSelected, setMenuSelected] = React.useState<DBEntry>(DUMMY);
+    function menuChangeSelection(entry: DBEntry) {
         setMenuSelected(entry);
     }
 
@@ -106,20 +109,44 @@ export function App() {
         }
     }
 
+    function openTopLevelNew() {
+        setMenuSelected(DUMMY);
+        dialogHandleOpen(DialogNames.NEW);
+    }
+
     const [settings, setSettings] = React.useState<Settings>({fontSize: 16, spellcheck: true, darkMode: false});
-    const [currentEntry, setCurrentEntry] = React.useState<Note | Notebook>(INTRO);
+    // const [currentEntry, setCurrentEntry] = React.useState<Notebook>(INTRO);
+    const [currentId, setCurrentId] = React.useState(-1);
 
     function settingsPanelUpdate(newVal: Partial<Settings>) {
         setSettings({ ...settings, ...newVal });
     }
 
-    function changeSelection(entry: Note | Notebook) {
+    function changeSelection(entry: DBEntry) {
         menuHandleClose();
         setLOpen(false);
         setROpen(false);
 
-        setCurrentEntry(entry);
+        setCurrentId(entry.id);
     }
+
+    useEffect(() => {
+        const ce = localStorage.getItem("currentId");
+        if (ce !== null) {
+            console.log("Parsing ", ce);
+            setCurrentId(parseInt(ce, 10));
+        }
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem("currentId", currentId.toString());
+    }, [currentId]);
+
+    const currentEntry = useLiveQuery(() => {
+        if (currentId < 0) return INTRO;
+        console.log("getting ", currentId)
+        return Database.notes.get(currentId);
+    }, [currentId], INTRO);
 
     return (
         <Box>
@@ -139,13 +166,14 @@ export function App() {
             <Drawer open={lOpen} variant="persistent" anchor="left" sx={{ width: drawerWidth, flexShrink: 0, "& .MuiDrawer-paper": { width: drawerWidth, boxSizing: "border-box" } }}>
                 {/* <Typography variant="body1">Uhh...</Typography> */}
                 <Button variant="contained" onClick={() => setLOpen(false)}>Close</Button>
-                <NotebookList menuOpener={menuHandleOpen} changeSelection={changeSelection} menuChangeSelection={menuChangeSelection} selected={currentEntry.id} parent={-1} indentLevel={-1} />
+                <Button onClick={openTopLevelNew}>Create New Entry<AddIcon /></Button>
+                <NotebookList menuOpener={menuHandleOpen} changeSelection={changeSelection} menuChangeSelection={menuChangeSelection} selected={currentId} parent={-1} indentLevel={-1} />
             </Drawer>
 
-            <Drawer open={rOpen} variant="persistent" anchor="right" sx={{ width: drawerWidth, flexShrink: 0, "& .MuiDrawer-paper": { width: drawerWidth, boxSizing: "border-box" } }}>
+            {/* <Drawer open={rOpen} variant="persistent" anchor="right" sx={{ width: drawerWidth, flexShrink: 0, "& .MuiDrawer-paper": { width: drawerWidth, boxSizing: "border-box" } }}>
                 <Button variant="contained" onClick={() => setROpen(false)}>Close</Button>
                 <SettingsPanel settings={settings} setSettings={settingsPanelUpdate} />
-            </Drawer>
+            </Drawer> */}
 
             <Editor id={currentEntry?.id} settings={settings} />
 

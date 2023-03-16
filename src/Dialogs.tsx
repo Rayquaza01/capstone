@@ -16,7 +16,7 @@ import Circle from "@mui/icons-material/Circle";
 
 import React, { useEffect, useState } from "react";
 
-import { Database, EntryTypes, Note, Notebook } from "./webdb";
+import { Database, EntryTypes, DBEntry } from "./webdb";
 import { MoveNoteList } from "./NoteSwitcher";
 
 export enum DialogNames {
@@ -29,7 +29,7 @@ export enum DialogNames {
 export interface DialogProps {
     open: boolean
     handleClose: (dialog: DialogNames) => void
-    entry: Note | Notebook
+    entry: DBEntry
 }
 
 export function CreateNoteDialog(props: DialogProps) {
@@ -54,7 +54,8 @@ export function CreateNoteDialog(props: DialogProps) {
 
         switch (type) {
             case EntryTypes.NOTE:
-                Database.notes.put({ name, parent: props.entry.id, text: "", color, type });
+                Database.notes.put({ name, parent: props.entry.id, color, type })
+                    .then(id => Database.noteData.put({ id, text: "" }));
                 break;
             case EntryTypes.FOLDER:
                 Database.notes.put({ name, parent: props.entry.id, color, type });
@@ -95,7 +96,7 @@ export function RenameNoteDialog(props: DialogProps) {
     useEffect(() => {
         setName(props.entry.name);
         setColor(props.entry.color);
-    }, [props.entry.name]);
+    }, [props.entry]);
 
     // useEffect(() => {
     //     setName("");
