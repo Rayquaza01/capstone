@@ -32,7 +32,7 @@ export class NTDatabase extends Dexie {
 
         this.version(1).stores({
             notes: "++id, name, parent, type",
-            noteData: "id, text"
+            noteData: "id"
         });
     }
 
