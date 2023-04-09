@@ -1,5 +1,5 @@
 import mysql from "mysql";
-import { Entry, UpdateEntry } from "./APITypes";
+import { Entry, UpdateEntry, ListParentBody, ListModifiedBody } from "./APITypes";
 
 const pool = mysql.createPool({
     connectionLimit: 10,
@@ -26,10 +26,16 @@ function query(options: mysql.QueryOptions | string): Promise<QueryResponse> {
 
 export function createEntry(user_id: number, entries: Entry[]): Promise<QueryResponse> {
     const insertValues = entries.map(i => {
-        return [user_id, i.id, i.parent, i.name, i.color, i.type, i.modified];
+        return [user_id, i.id, i.parent, i.name, i.color, i.type, new Date(i.modified)];
     });
 
-    const statement = mysql.format("INSERT INTO metadata (user_id, id, parent, name, color, type, modified) VALUES ?;", insertValues);
+    const insertText = entries.filter(i => i.type === "note").map(i => [i.id, ""]);
+
+    const textStatement = mysql.format("INSERT INTO data (id, text) VALUES (?)", insertText);
+    query(textStatement);
+
+    const statement = mysql.format("INSERT INTO metadata (user_id, id, parent, name, color, type, modified) VALUES (?);", insertValues);
+    console.log(statement);
     return query(statement);
 }
 
@@ -72,4 +78,67 @@ export async function deleteEntry(user_id: number, ids: number[]): Promise<Query
     return Promise.all(ret);
 }
 
-export async function
+export async function getParentEntry(user_id: number, opts: ListParentBody) {
+    let limit = 50;
+    if (opts.limit !== undefined && opts.limit <= 1000) {
+        limit = opts.limit;
+    }
+
+    let statement = "";
+    if (opts.offset !== undefined) {
+        statement = mysql.format("SELECT * FROM metadata WHERE user_id = ? AND id > ? AND parent = ? LIMIT ?;", [user_id, opts.offset, opts.parent, limit]);
+    } else {
+        statement = mysql.format("SELECT * FROM metadata WHERE user_id = ? AND parent = ? LIMIT ?;", [user_id, opts.parent, limit]);
+    }
+
+    return query(statement);
+}
+
+export async function getModifiedEntry(user_id: number, opts: ListModifiedBody) {
+    let limit = 50;
+    if (opts.limit !== undefined && opts.limit <= 1000) {
+        limit = opts.limit;
+    }
+
+    let statement = "";
+    if (opts.offset !== undefined) {
+        statement = mysql.format("SELECT * FROM metadata WHERE user_id = ? AND id > ? AND modified > ? LIMIT ?;", [user_id, opts.offset, opts.modifiedSince, limit]);
+    } else {
+        statement = mysql.format("SELECT * FROM metadata WHERE user_id = ? AND modified > ? LIMIT ?;", [user_id, opts.modifiedSince, limit]);
+    }
+
+    return query(statement);
+}
+
+export async function getEntryById(user_id: number, id: number) {
+    const statement = mysql.format("SELECT * FROM metadata WHERE user_id = ? AND id = ?;", [user_id, id]);
+    return query(statement);
+}
+
+export async function getTextEntry(user_id: number, id: number) {
+    const statement = mysql.format("SELECT * FROM data WHERE user_id = ? AND id = ?;", [user_id, id]);
+    return query(statement);
+}
+
+// USER ACCOUNTS
+
+export interface UserAccount {
+    id: number
+    username: string
+    password: string
+}
+
+export async function createUser(username: string, password: string) {
+    const statement = mysql.format("INSERT INTO users SET ?;", [{username, password}]);
+    return query(statement);
+}
+
+export async function getUserByUsername(username: string) {
+    const statement = mysql.format("SELECT * FROM user WHERE username = ?;", [username]);
+    return query(statement);
+}
+
+export async function getUser(user_id: number) {
+    const statement = mysql.format("SELECT * FROM user WHERE id = ?;", [user_id]);
+    return query(statement);
+}
