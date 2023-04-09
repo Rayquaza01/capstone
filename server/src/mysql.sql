@@ -6,7 +6,7 @@ GRANT ALL PRIVILEGES ON notetaker.* TO 'notetaker'@'localhost';
 
 CREATE TABLE users (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    username VARCHAR(20),
+    username VARCHAR(20) UNIQUE,
     password CHAR(60)
 );
 
