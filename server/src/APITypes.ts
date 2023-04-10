@@ -37,6 +37,7 @@ export interface UpdateEntry {
     id: number
     name?: string
     color?: string
+    parent?: number
     modified: string | Date
 }
 
@@ -49,6 +50,10 @@ export function isUpdateEntry(e?: Record<string, any>): e is UpdateEntry {
 
     if ("color" in e) {
         if (!(typeof e.color === "string" && isColor(e.color))) return false;
+    }
+
+    if ("parent" in e) {
+        if (!(typeof e.parent === "number")) return false;
     }
 
     return typeof e.id === "string" &&
@@ -66,7 +71,6 @@ export interface AuthenticateBody {
 }
 
 export interface CreateBody {
-    auth: string
     entry: Entry[]
 }
 
@@ -78,7 +82,6 @@ export function isCreateBody(e?: Record<string, any>): e is CreateBody {
 }
 
 export interface UpdateBody {
-    auth: string
     entry: UpdateEntry
 }
 
@@ -90,7 +93,6 @@ export function isUpdateBody(e?: Record<string, any>): e is UpdateBody {
 }
 
 export interface DeleteBody {
-    auth: string
     id: number[]
 }
 
@@ -100,7 +102,6 @@ export function isDeleteBody(e: Record<string, any>): e is DeleteBody {
 }
 
 export interface ListBody {
-    auth: string
     parent?: number
     offset?: number
     limit?: number
@@ -108,33 +109,28 @@ export interface ListBody {
 }
 
 export interface ListParentBody {
-    auth: string
     parent: number
     offset?: number
     limit?: number
 }
 
 export interface ListModifiedBody {
-    auth: string
     modifiedSince: number
     offset?: number
     limit?: number
 }
 
 export interface ListTextModifiedBody {
-    auth: string
     modifiedSince: number
     offset?: number
     limit?: number
 }
 
 export interface GetTextBody {
-    auth: string
     id: number
 }
 
 export interface SetTextBody {
-    auth: string
     id: number
     text: string
 }

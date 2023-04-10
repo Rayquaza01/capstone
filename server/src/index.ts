@@ -30,7 +30,7 @@ app.post("/api/create", async (req, res) => {
         return;
     }
 
-    // const jwt = authenticate(req.body.auth);
+    // const jwt = authenticate(req.headers["authorization"]);
     // if (!jwt) {
     //     res.status(401);
     //     res.send({ error: "Request could not be authenticated" });
@@ -57,7 +57,7 @@ app.post("/api/update", async (req, res) => {
         return;
     }
 
-    const jwt = authenticate(req.body.auth);
+    const jwt = authenticate(req.headers["authorization"]);
     if (!jwt) {
         res.status(401);
         res.send({ error: "Request could not be authenticated" });
@@ -84,7 +84,7 @@ app.post("/api/delete", async (req, res) => {
         return;
     }
 
-    // const jwt = authenticate(req.body.auth);
+    // const jwt = authenticate(req.headers["authorization"]);
     // if (!jwt) {
     //     res.status(401);
     //     res.send({ error: "Request could not be authenticated" });

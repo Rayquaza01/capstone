@@ -35,7 +35,11 @@ export async function login(username: string, password: string): Promise<string 
     return null;
 }
 
-export function authenticate(token: string): JwtPayload | false {
+export function authenticate(token?: string): JwtPayload | false {
+    if (!token || !token.startsWith("Bearer")) return false;
+
+    token = token.replace(/^Bearer\s+/, "");
+
     try {
         return jwt.verify(token, JWT_SECRET) as JwtPayload;
     } catch {
