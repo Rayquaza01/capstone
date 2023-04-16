@@ -54,11 +54,10 @@ export function CreateNoteDialog(props: DialogProps) {
 
         switch (type) {
             case EntryTypes.NOTE:
-                Database.notes.put({ name, parent: props.entry.id, color, type })
-                    .then(id => Database.noteData.put({ id, text: "" }));
+                Database.createEntry({ name, parent: props.entry.id, color, type });
                 break;
             case EntryTypes.FOLDER:
-                Database.notes.put({ name, parent: props.entry.id, color, type });
+                Database.createEntry({ name, parent: props.entry.id, color, type });
                 break;
         }
         handleClose();
@@ -110,7 +109,7 @@ export function RenameNoteDialog(props: DialogProps) {
         if (name === "") return;
 
         if (typeof props.entry.id === "number") {
-            Database.notes.update(props.entry?.id, { name, color });
+            Database.updateEntry({ id: props.entry?.id, name, color })
         }
         handleClose();
     }
@@ -177,7 +176,7 @@ export function MoveNoteDialog(props: DialogProps) {
 
     function moveNote() {
         if (typeof props.entry.id === "number") {
-            Database.notes.update(props.entry.id, { parent: selected });
+            Database.updateEntry({ id: props.entry.id, parent: selected });
         }
         handleClose();
     }

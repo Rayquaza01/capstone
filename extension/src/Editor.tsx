@@ -39,13 +39,13 @@ export function Editor(props: EditorProps) {
 
     function updateDB(value: string, delta, source: string) {
         setContent(value);
-        console.log(delta);
+        // console.log(delta);
 
         if (props.id === undefined || props.id < 0) return;
 
         if (source === "user") {
-            console.log(value);
-            Database.noteData.update(props.id, { text: value });
+            // console.log(value);
+            Database.updateText({ id: props.id, text: value });
         }
     }
 

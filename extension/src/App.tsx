@@ -133,7 +133,6 @@ export function App() {
     useEffect(() => {
         const ce = localStorage.getItem("currentId");
         if (ce !== null) {
-            console.log("Parsing ", ce);
             setCurrentId(parseInt(ce, 10));
         }
     }, []);
@@ -144,7 +143,6 @@ export function App() {
 
     const currentEntry = useLiveQuery(() => {
         if (currentId < 0) return INTRO;
-        console.log("getting ", currentId)
         return Database.notes.get(currentId);
     }, [currentId], INTRO);
 
