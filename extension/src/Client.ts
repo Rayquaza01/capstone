@@ -1,6 +1,12 @@
 import { List } from "material-ui";
 import { DBEntry, UpdateEntry } from "./webdb";
 
+export interface ResolveSyncResponse {
+    toUpload: number[]
+    toDownload: number[]
+    toDelete: number[]
+}
+
 interface ListResponse {
     error: null
     total: number
@@ -64,11 +70,15 @@ export class Client {
     };
 
     getEntryByModified(modifiedSince: string, offset?: number): Promise<ListResponse> {
-        return this.request("api/list", JSON.stringify({
+        return this.request("/api/list", JSON.stringify({
             modifiedSince,
             limit: this.limit,
             offset: offset ?? 0
         })) as Promise<ListResponse>;
+    }
+
+    resolveSync(entries: {id: number, modified: string}[]): Promise<ResolveSyncResponse> {
+        return this.request("/api/resolveSync", JSON.stringify({entries}));
     }
 
     getEntryByParent(parent: number) {

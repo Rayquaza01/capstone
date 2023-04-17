@@ -1,9 +1,21 @@
 import Dexie from "dexie";
 import { Client } from "./Client";
+import { Sync } from "@mui/icons-material";
 
 export enum EntryTypes {
     FOLDER = "folder",
     NOTE = "note"
+}
+
+enum SyncActions {
+    CREATE,
+    UPDATE,
+    DELETE
+}
+
+interface SyncToDoEntry {
+    id: number,
+    action: SyncActions
 }
 
 export interface DBEntry {
@@ -41,6 +53,9 @@ export interface TextEntry {
 export class NTDatabase extends Dexie {
     notes!: Dexie.Table<DBEntry, number>;
     noteData!: Dexie.Table<TextEntry, number>;
+    syncToDo!: Dexie.Table<SyncToDoEntry, number>;
+
+    online: boolean = true;
 
     client = new Client();
 
@@ -49,9 +64,12 @@ export class NTDatabase extends Dexie {
 
         this.version(1).stores({
             notes: "++id, name, parent, type",
-            noteData: "id"
+            noteData: "id",
+            syncToDo: "id, action"
         });
     }
+
+    // METADATA
 
     createEntry(entry: DBEntry) {
         if (!entry.modified) {
@@ -61,10 +79,57 @@ export class NTDatabase extends Dexie {
         this.notes.put(entry)
             .then(id => {
                 this.createText(id);
-                this.client.createEntry([{...entry, id}]);
-            });
 
+                if (this.online) {
+                    this.client.createEntry([{...entry, id}]);
+                } else {
+                    this.syncToDo.put({id, action: SyncActions.CREATE});
+                }
+            });
     }
+
+    updateEntry(entry: UpdateEntry) {
+        if (entry.id === undefined || entry.id < 0) return;
+
+        if (!entry.modified) {
+            entry.modified = new Date();
+        }
+
+        this.notes.update(entry.id, entry);
+
+        if (this.online) {
+            this.client.updateEntry(entry);
+        } else {
+            this.syncToDo.put({id: entry.id, action: SyncActions.UPDATE});
+        }
+    }
+
+    deleteEntry(id: number) {
+        this.notes.delete(id);
+        this.noteData.delete(id);
+
+        if (this.online) {
+            this.client.deleteEntry([id]);
+        } else {
+            this.syncToDo.put({id, action: SyncActions.DELETE});
+        }
+    }
+
+    /**
+     * Deletes a notebook and all children/grandchildren
+     * @param id The id to delete
+     */
+    deleteFolder(id?: number) {
+        if (id && id > -1) {
+            this.notes.where({ parent: id }).each(obj => {
+                if (obj.type === EntryTypes.FOLDER)
+                    this.deleteFolder(obj.id);
+            });
+            this.deleteEntry(id);
+        }
+    }
+
+    // TEXT
 
     createText(id: number) {
         const newText = { id, text: "", modified: new Date() };
@@ -85,46 +150,16 @@ export class NTDatabase extends Dexie {
         this.noteData.update(entry.id, entry);
     }
 
-    updateEntry(entry: UpdateEntry) {
-        if (entry.id === undefined || entry.id < 0) return;
 
-        if (!entry.modified) {
-            entry.modified = new Date();
-        }
-
-        this.notes.update(entry.id, entry);
-
-        this.client.updateEntry(entry);
-    }
-
-    deleteEntry(id: number) {
-        this.notes.delete(id);
-        this.noteData.delete(id);
-
-        this.client.deleteEntry([id]);
-    }
-
-    /**
-     * Deletes a notebook and all children/grandchildren
-     * @param id The id to delete
-     */
-    deleteFolder(id?: number) {
-        if (id && id > -1) {
-            this.notes.where({ parent: id }).each(obj => {
-                if (obj.type === EntryTypes.FOLDER)
-                    this.deleteFolder(obj.id);
-            });
-            this.deleteEntry(id);
-        }
-    }
-
-    async syncDown() {
-        // const lastSync = new Date(localStorage.getItem("metadataLastSync") ?? 0);
-        // const query = await this.client.getEntryByModified(lastSync.toString());
-
-        const idmodified = (await this.notes.toArray()).map(item => {
-            return { id: item.id, modified: item.modified };
+    async resolveSync() {
+        const notes = await this.notes.toArray();
+        const entries = notes.map(item => {
+            return {id: item.id as number, modified: (item.modified as Date).toString()}
         });
+
+        const resolve = await this.client.resolveSync(entries);
+        console.log(resolve);
+        this.notes.bulkDelete(resolve.toDelete);
     }
 }
 

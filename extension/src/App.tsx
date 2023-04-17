@@ -11,6 +11,7 @@ import Drawer from "@mui/material/Drawer";
 import MenuIcon from "@mui/icons-material/Menu";
 import SettingsIcon from "@mui/icons-material/Settings";
 import AddIcon from "@mui/icons-material/Add";
+import SyncIcon from "@mui/icons-material/Sync";
 
 import { NotebookList } from "./NoteSwitcher";
 
@@ -155,6 +156,9 @@ export function App() {
                         <MenuIcon />
                     </IconButton>
                     <Typography variant="h6" flexGrow={1}>{currentEntry.name}</Typography>
+                    <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ ml: 2 }} onClick={() => Database.resolveSync()}>
+                        <SyncIcon />
+                    </IconButton>
                     <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ ml: 2 }} onClick={() => setROpen(true)}>
                         <SettingsIcon />
                     </IconButton>
