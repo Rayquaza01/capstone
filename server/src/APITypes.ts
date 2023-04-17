@@ -56,7 +56,7 @@ export function isUpdateEntry(e?: Record<string, any>): e is UpdateEntry {
         if (!(typeof e.parent === "number")) return false;
     }
 
-    return typeof e.id === "string" &&
+    return typeof e.id === "number" &&
         typeof e.modified === "string";
 }
 
@@ -77,8 +77,7 @@ export interface CreateBody {
 export function isCreateBody(e?: Record<string, any>): e is CreateBody {
     if (!e) return false;
 
-    return typeof e.auth === "string" &&
-        (Array.isArray(e.entry) && e.entry.every(isEntry));
+    return (Array.isArray(e.entry) && e.entry.every(isEntry));
 }
 
 export interface UpdateBody {
@@ -88,8 +87,7 @@ export interface UpdateBody {
 export function isUpdateBody(e?: Record<string, any>): e is UpdateBody {
     if (!e) return false;
 
-    return typeof e.auth === "string" &&
-        isUpdateEntry(e.entry);
+    return isUpdateEntry(e.entry);
 }
 
 export interface DeleteBody {
@@ -97,33 +95,51 @@ export interface DeleteBody {
 }
 
 export function isDeleteBody(e: Record<string, any>): e is DeleteBody {
-    return typeof e.auth === "string" &&
-        (Array.isArray(e.id) && e.id.every(i => typeof i === "number"));
+    return (Array.isArray(e.id) && e.id.every(i => typeof i === "number"));
+}
+
+export interface ResolveSyncBody {
+    entries: { id: number, modified: string }[];
+}
+
+export function isResolveSyncBody(e?: Record<string, any>): e is ResolveSyncBody {
+    if (!e) return false;
+
+    return (Array.isArray(e.entries) &&
+        e.entries.every(
+            item => typeof item.id === "number" && typeof item.modified === "string")
+        );
 }
 
 export interface ListBody {
     parent?: number
     offset?: number
-    limit?: number
+    limit: number
     modifiedSince?: Date
 }
 
 export interface ListParentBody {
     parent: number
     offset?: number
-    limit?: number
+    limit: number
 }
 
 export interface ListModifiedBody {
-    modifiedSince: number
+    modifiedSince: string
     offset?: number
-    limit?: number
+    limit: number
+}
+
+export function isListModifiedBody(e: Record<string, any>): e is ListModifiedBody {
+    return typeof e.modifiedSince === "string" &&
+        (!("offset" in e) || typeof e.offset === "number") &&
+        typeof e.limit === "number";
 }
 
 export interface ListTextModifiedBody {
     modifiedSince: number
     offset?: number
-    limit?: number
+    limit: number
 }
 
 export interface GetTextBody {

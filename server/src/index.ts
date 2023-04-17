@@ -47,24 +47,25 @@ app.post("/api/create", async (req, res) => {
 
     res.status(200);
     res.send({ error: null });
-    return;
 });
 
 app.post("/api/update", async (req, res) => {
+    console.log("Update", req.body);
     if (!APITypes.isUpdateBody(req.body)) {
         res.status(400);
         res.send({ error: "Request could not be understood" });
         return;
     }
 
-    const jwt = authenticate(req.headers["authorization"]);
-    if (!jwt) {
-        res.status(401);
-        res.send({ error: "Request could not be authenticated" });
-        return;
-    }
+    // const jwt = authenticate(req.headers["authorization"]);
+    // if (!jwt) {
+    //     res.status(401);
+    //     res.send({ error: "Request could not be authenticated" });
+    //     return;
+    // }
 
-    const dbQuery = await DB.updateEntry(jwt.id, req.body.entry);
+    // const dbQuery = await DB.updateEntry(jwt.id, req.body.entry);
+    const dbQuery = await DB.updateEntry(1, req.body.entry);
     if (dbQuery.error) {
         res.status(500);
         res.send({ error: dbQuery.error });
@@ -73,8 +74,6 @@ app.post("/api/update", async (req, res) => {
 
     res.status(200);
     res.send({error: null});
-
-    res.send("hello");
 });
 
 app.post("/api/delete", async (req, res) => {
@@ -101,11 +100,55 @@ app.post("/api/delete", async (req, res) => {
 
     res.status(200);
     res.send({ error: null });
-    return;
 });
 
-app.post("/api/list", (req, res) => {
-    res.send("hello");
+app.post("/api/list", async (req, res) => {
+    if (!APITypes.isListModifiedBody(req.body)) {
+        res.status(400);
+        res.send({ error: "Request could not be understood" });
+        return;
+    }
+
+    const dbQuery = await DB.getModifiedEntry(1, req.body);
+    if (dbQuery.error) {
+        res.status(500);
+        res.send({ error: dbQuery.error });
+        return;
+    }
+
+    const resultCount = dbQuery.results.length;
+    let offset: null | number = null;
+    if (resultCount === req.body.limit) {
+        offset = (req.body.offset ?? 0) + resultCount;
+    }
+
+    const entry = dbQuery.results.map(item => {
+        delete item.user_id;
+        return item;
+    });
+
+    const response = {
+        error: null,
+        total: dbQuery.results.length,
+        offset,
+        entry
+    };
+
+    res.status(200);
+    res.send(response);
+});
+
+app.post("/api/resolveSync", async (req, res) => {
+    if (!APITypes.isResolveSyncBody(req.body)) {
+        res.status(400);
+        res.send({ error: "Request could not be understood" });
+        return;
+    }
+
+    const resolve = await DB.resolveSync(1, req.body.entries);
+
+    res.status(200);
+    res.send(resolve);
 });
 
 app.listen(3000);
