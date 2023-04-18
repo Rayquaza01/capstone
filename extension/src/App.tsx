@@ -156,7 +156,7 @@ export function App() {
                         <MenuIcon />
                     </IconButton>
                     <Typography variant="h6" flexGrow={1}>{currentEntry.name}</Typography>
-                    <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ ml: 2 }} onClick={() => Database.resolveSync()}>
+                    <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ ml: 2 }} onClick={() => Database.sync()}>
                         <SyncIcon />
                     </IconButton>
                     <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ ml: 2 }} onClick={() => setROpen(true)}>

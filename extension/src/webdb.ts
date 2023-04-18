@@ -1,6 +1,5 @@
 import Dexie from "dexie";
 import { Client } from "./Client";
-import { Sync } from "@mui/icons-material";
 
 export enum EntryTypes {
     FOLDER = "folder",
@@ -45,7 +44,7 @@ export interface UpdateEntry {
 
 export interface TextEntry {
     id?: number
-    text: string
+    contents: string
 
     modified?: Date
 }
@@ -99,8 +98,6 @@ export class NTDatabase extends Dexie {
 
         if (this.online) {
             this.client.updateEntry(entry);
-        } else {
-            this.syncToDo.put({id: entry.id, action: SyncActions.UPDATE});
         }
     }
 
@@ -110,6 +107,7 @@ export class NTDatabase extends Dexie {
 
         if (this.online) {
             this.client.deleteEntry([id]);
+            this.client.deleteTextEntry([id]);
         } else {
             this.syncToDo.put({id, action: SyncActions.DELETE});
         }
@@ -132,10 +130,14 @@ export class NTDatabase extends Dexie {
     // TEXT
 
     createText(id: number) {
-        const newText = { id, text: "", modified: new Date() };
+        const newText = { id, contents: "", modified: new Date() };
         console.log("New text is ", newText);
 
         this.noteData.put(newText);
+
+        if (this.online) {
+            this.client.createTextEntry([newText]);
+        }
     }
 
     updateText(entry: TextEntry) {
@@ -150,6 +152,32 @@ export class NTDatabase extends Dexie {
         this.noteData.update(entry.id, entry);
     }
 
+    sync() {
+        this.resolveSync();
+        this.resolveSyncText();
+    }
+
+    async resolveSyncText() {
+        const notes = await this.noteData.toArray();
+        const entries = notes.map(item => {
+            return {id: item.id as number, modified: (item.modified as Date).toString()}
+        });
+
+        const resolve = await this.client.resolveSync(entries, "data");
+
+        // delete notes that were deleted on server
+        this.noteData.bulkDelete(resolve.toDelete);
+
+        if (resolve.toDownload.length > 0) {
+            this.client.getTextEntriesByIDs(resolve.toDownload)
+                .then(toDownload => this.noteData.bulkPut(toDownload.entries));
+        }
+
+        if (resolve.toUpload.length > 0) {
+            this.noteData.bulkGet(resolve.toUpload)
+                .then(toUpload => toUpload.forEach(item => this.client.updateTextEntry(item as TextEntry)));
+        }
+    }
 
     async resolveSync() {
         const notes = await this.notes.toArray();
@@ -157,9 +185,20 @@ export class NTDatabase extends Dexie {
             return {id: item.id as number, modified: (item.modified as Date).toString()}
         });
 
-        const resolve = await this.client.resolveSync(entries);
-        console.log(resolve);
+        const resolve = await this.client.resolveSync(entries, "metadata");
+
+        // delete notes that were deleted on server
         this.notes.bulkDelete(resolve.toDelete);
+
+        if (resolve.toDownload.length > 0) {
+            this.client.getEntriesByIDs(resolve.toDownload)
+                .then(toDownload => this.notes.bulkPut(toDownload.entries));
+        }
+
+        if (resolve.toUpload.length > 0) {
+            this.notes.bulkGet(resolve.toUpload)
+                .then(toUpload => toUpload.forEach(item => this.client.updateEntry(item as DBEntry)));
+        }
     }
 }
 

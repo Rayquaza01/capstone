@@ -1,5 +1,5 @@
 import { List } from "material-ui";
-import { DBEntry, UpdateEntry } from "./webdb";
+import { DBEntry, TextEntry, UpdateEntry } from "./webdb";
 
 export interface ResolveSyncResponse {
     toUpload: number[]
@@ -52,9 +52,17 @@ export class Client {
             .then(console.log);
     }
 
+    createTextEntry(entry: TextEntry[]) {
+        this.request("/api/createText", JSON.stringify({ entry }));
+    }
+
     updateEntry(entry: UpdateEntry) {
         this.request("/api/update", JSON.stringify({ entry }))
             .then(console.log);
+    }
+
+    updateTextEntry(entry: TextEntry) {
+        this.request("/api/updateText", JSON.stringify({ entry }));
     }
 
     deleteEntry(id: number[]) {
@@ -62,42 +70,19 @@ export class Client {
             .then(console.log);
     }
 
-    getEntryNeedsUpdate(id: number, modified: string): Promise<EntryNeedsUpdateResponse> {
-        return this.request("/api/getNeedUpdate", JSON.stringify({
-            id,
-            modified
-        }));
-    };
-
-    getEntryByModified(modifiedSince: string, offset?: number): Promise<ListResponse> {
-        return this.request("/api/list", JSON.stringify({
-            modifiedSince,
-            limit: this.limit,
-            offset: offset ?? 0
-        })) as Promise<ListResponse>;
+    deleteTextEntry(id: number[]) {
+        this.request("/api/deleteText", JSON.stringify({ id }));
     }
 
-    resolveSync(entries: {id: number, modified: string}[]): Promise<ResolveSyncResponse> {
-        return this.request("/api/resolveSync", JSON.stringify({entries}));
+    getTextEntriesByIDs(ids: number[]) {
+        return this.request("/api/listTextByIDs", JSON.stringify({ ids }));
     }
 
-    getEntryByParent(parent: number) {
-        return;
+    getEntriesByIDs(ids: number[]) {
+        return this.request("/api/listByIDs", JSON.stringify({ ids }));
     }
 
-    getEntryByID(id: number) {
-        return;
-    }
-
-    getTextByModified(modifiedSince: string) {
-        return;
-    }
-
-    getTextByID(id: number) {
-        return;
-    }
-
-    updateText(id: number, text: string) {
-        return;
+    resolveSync(entries: {id: number, modified: string}[], mode: string): Promise<ResolveSyncResponse> {
+        return this.request("/api/resolveSync", JSON.stringify({ entries, mode }));
     }
 }

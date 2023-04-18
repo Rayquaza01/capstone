@@ -45,7 +45,7 @@ export function Editor(props: EditorProps) {
 
         if (source === "user") {
             // console.log(value);
-            Database.updateText({ id: props.id, text: value });
+            Database.updateText({ id: props.id, contents: value, modified: new Date() });
         }
     }
 
@@ -61,7 +61,7 @@ export function Editor(props: EditorProps) {
                 setContent("");
                 return;
             }
-            setContent(value.text);
+            setContent(value.contents);
         });
     }, [props.id]);
 
