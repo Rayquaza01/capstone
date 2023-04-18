@@ -23,14 +23,16 @@ export function isEntry(e?: Record<string, any>): e is Entry {
 
 export interface TextEntry {
     id: number,
-    text: string
+    contents: string
+    modified: string
 }
 
 export function isTextEntry(e?: Record<string, any>): e is TextEntry {
     if (!e) return false;
 
     return typeof e.id === "number" &&
-        typeof e.text === "string";
+        typeof e.contents === "string" &&
+        typeof e.modified === "string";
 }
 
 export interface UpdateEntry {
@@ -80,6 +82,16 @@ export function isCreateBody(e?: Record<string, any>): e is CreateBody {
     return (Array.isArray(e.entry) && e.entry.every(isEntry));
 }
 
+export interface CreateTextBody {
+    entry: TextEntry[]
+}
+
+export function isCreateTextBody(e?: Record<string, any>): e is CreateTextBody {
+    if (!e) return false;
+
+    return (Array.isArray(e.entry) && e.entry.every(item => isTextEntry(item)));
+}
+
 export interface UpdateBody {
     entry: UpdateEntry
 }
@@ -100,15 +112,25 @@ export function isDeleteBody(e: Record<string, any>): e is DeleteBody {
 
 export interface ResolveSyncBody {
     entries: { id: number, modified: string }[];
+    mode: string
 }
 
 export function isResolveSyncBody(e?: Record<string, any>): e is ResolveSyncBody {
     if (!e) return false;
 
-    return (Array.isArray(e.entries) &&
-        e.entries.every(
-            item => typeof item.id === "number" && typeof item.modified === "string")
-        );
+    return Array.isArray(e.entries) &&
+        e.entries.every(item => typeof item.id === "number" && typeof item.modified === "string") &&
+        typeof e.mode === "string";
+}
+
+export interface ListByIDsBody {
+    ids: number[]
+}
+
+export function isListByIDsBody(e?: Record<string, any>): e is ListByIDsBody {
+    if (!e) return false;
+
+    return Array.isArray(e.ids) && e.ids.every(i => typeof i === "number");
 }
 
 export interface ListBody {

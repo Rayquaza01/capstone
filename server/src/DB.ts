@@ -1,5 +1,5 @@
 import mysql from "mysql";
-import { Entry, UpdateEntry, ListParentBody, ListModifiedBody } from "./APITypes";
+import { Entry, UpdateEntry, ListParentBody, ListModifiedBody, TextEntry } from "./APITypes";
 
 const pool = mysql.createPool({
     connectionLimit: 10,
@@ -46,13 +46,16 @@ export function createEntry(user_id: number, entries: Entry[]): Promise<QueryRes
         return [user_id, i.id, i.parent, i.name, i.color, i.type, new Date(i.modified)];
     });
 
-    const insertText = entries.filter(i => i.type === "note").map(i => [i.id, ""]);
-
-    const textStatement = mysql.format("INSERT INTO data (id, text) VALUES ?", [insertText]);
-    query(textStatement);
-
     const statement = mysql.format("INSERT INTO metadata (user_id, id, parent, name, color, type, modified) VALUES ?;", [insertValues]);
-    console.log(statement);
+    return query(statement);
+}
+
+export function createTextEntry(user_id: number, entries: TextEntry[]): Promise<QueryResponse> {
+    const insertValues = entries.map(i => {
+        return [user_id, i.id, i.contents, new Date(i.modified)]
+    })
+
+    const statement = mysql.format("INSERT INTO data (user_id, id, contents, modified) VALUES ?;", [insertValues]);
     return query(statement);
 }
 
@@ -72,32 +75,24 @@ export function updateEntry(user_id: number, entry: UpdateEntry): Promise<QueryR
     }
 
     const statement = mysql.format("UPDATE metadata SET ? WHERE user_id = ? AND id = ?;", [update, user_id, entry.id]);
-    console.log(statement);
     return query(statement);
 }
 
-export async function deleteEntry(user_id: number, ids: number[]): Promise<QueryResponse[]> {
-    let notes: number[] = [];
+export function updateTextEntry(user_id: number, entry: TextEntry): Promise<QueryResponse> {
+    const update = { contents: entry.contents, modified: new Date(entry.modified) };
 
-    const typeStatement = mysql.format("SELECT id FROM metadata WHERE user_id = ? AND id IN (?) AND type = ?;", [user_id, ids, "note"]);
-    const types = await query(typeStatement);
+    const statement = mysql.format("UPDATE data SET ? WHERE user_id = ? AND id = ?;", [update, user_id, entry.id]);
+    return query(statement);
+}
 
-    if (!types.error) {
-        const results = types.results as {id: number}[];
-        notes = results.map(item => item.id);
-    }
-
-    const ret: Promise<QueryResponse>[] = [];
-
+export async function deleteEntry(user_id: number, ids: number[]): Promise<QueryResponse> {
     const deleteMetadataStatement = mysql.format("DELETE FROM metadata WHERE user_id = ? AND id IN (?);", [user_id, ids]);
-    ret.push(query(deleteMetadataStatement));
+    return query(deleteMetadataStatement);
+}
 
-    if (notes.length > 0) {
-        const deleteNoteStatement = mysql.format("DELETE FROM data WHERE user_id = ? AND id IN (?);", [user_id, notes]);
-        ret.push(query(deleteNoteStatement));
-    }
-
-    return Promise.all(ret);
+export async function deleteTextEntry(user_id: number, ids: number[]) {
+    const statement = mysql.format("DELETE FROM data WHERE user_id = ? AND id IN (?);", [user_id, ids]);
+    return query(statement);
 }
 
 export async function getParentEntry(user_id: number, opts: ListParentBody) {
@@ -128,13 +123,13 @@ export async function getModifiedEntry(user_id: number, opts: ListModifiedBody) 
     return query(statement);
 }
 
-export async function getEntryById(user_id: number, id: number) {
-    const statement = mysql.format("SELECT * FROM metadata WHERE user_id = ? AND id = ?;", [user_id, id]);
+export async function getEntryByIDs(user_id: number, ids: number[]) {
+    const statement = mysql.format("SELECT * FROM metadata WHERE user_id = ? AND id IN (?);", [user_id, ids]);
     return query(statement);
 }
 
-export async function getTextEntry(user_id: number, id: number) {
-    const statement = mysql.format("SELECT * FROM data WHERE user_id = ? AND id = ?;", [user_id, id]);
+export async function getTextEntryByIDs(user_id: number, ids: number[]) {
+    const statement = mysql.format("SELECT * FROM data WHERE user_id = ? AND id IN (?);", [user_id, ids]);
     return query(statement);
 }
 
@@ -144,7 +139,7 @@ export interface ResolveInfo {
     toDelete: number[]
 }
 
-export async function resolveSync(user_id: number, entries: { id: number, modified: string}[]): Promise<ResolveInfo> {
+export async function resolveSync(user_id: number, entries: { id: number, modified: string}[], table: string): Promise<ResolveInfo> {
     const resolve: ResolveInfo = {
         toUpload: [],
         toDownload: [],
@@ -161,7 +156,14 @@ export async function resolveSync(user_id: number, entries: { id: number, modifi
 
     const loadClientDataStatement = mysql.format("INSERT INTO clientdata (id, modified) VALUES ?;", [entries.map(i => [i.id, new Date(i.modified)])]);
     // console.log("Client Data Statement", loadClientDataStatement);
-    const loadServerDataStatement = mysql.format("INSERT INTO serverdata (id, modified) (SELECT id, modified FROM metadata WHERE user_id = ?);", [user_id]);
+    let loadServerDataStatement;
+    if (table === "metadata") {
+        loadServerDataStatement = mysql.format("INSERT INTO serverdata (id, modified) (SELECT id, modified FROM metadata WHERE user_id = ?);", [user_id]);
+    } else if (table === "data") {
+        loadServerDataStatement = mysql.format("INSERT INTO serverdata (id, modified) (SELECT id, modified FROM data WHERE user_id = ?);", [user_id]);
+    } else {
+        return resolve;
+    }
     // console.log("Server Data Statement", loadServerDataStatement);
 
     const [clientData, serverData] = await Promise.all([
@@ -178,12 +180,6 @@ export async function resolveSync(user_id: number, entries: { id: number, modifi
         queryWithConnection("SELECT id FROM serverdata WHERE id NOT IN (SELECT id FROM clientdata);", conn),
         queryWithConnection("SELECT id FROM clientdata WHERE id NOT IN (SELECT id FROM serverdata);", conn)
     ])
-
-    const [cd, sd] = await Promise.all([
-        queryWithConnection("SELECT * FROM clientdata;", conn),
-        queryWithConnection("SELECT * FROM serverdata;", conn)
-    ]);
-    console.log(cd.results, sd.results);
 
     // console.log("Client Newer", clientIsNewer.error);
     // console.log("Server Newer", serverIsNewer.error);
