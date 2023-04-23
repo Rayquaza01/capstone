@@ -37,7 +37,7 @@ export interface EditorProps {
 export function Editor(props: EditorProps) {
     const [content, setContent] = useState("");
 
-    function updateDB(value: string, delta, source: string) {
+    function updateDB(value: string, delta: any, source: string) {
         setContent(value);
         // console.log(delta);
 

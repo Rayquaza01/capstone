@@ -119,9 +119,9 @@ export function App() {
     // const [currentEntry, setCurrentEntry] = React.useState<Notebook>(INTRO);
     const [currentId, setCurrentId] = React.useState(-1);
 
-    function settingsPanelUpdate(newVal: Partial<Settings>) {
-        setSettings({ ...settings, ...newVal });
-    }
+    // function settingsPanelUpdate(newVal: Partial<Settings>) {
+    //     setSettings({ ...settings, ...newVal });
+    // }
 
     function changeSelection(entry: DBEntry) {
         menuHandleClose();
@@ -150,12 +150,12 @@ export function App() {
     return (
         <Box>
 
-            <AppBar position="static" style={{ backgroundColor: currentEntry.color }}>
+            <AppBar position="static" style={{ backgroundColor: (currentEntry ?? INTRO).color }}>
                 <Toolbar>
                     <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }} onClick={() => setLOpen(true)}>
                         <MenuIcon />
                     </IconButton>
-                    <Typography variant="h6" flexGrow={1}>{currentEntry.name}</Typography>
+                    <Typography variant="h6" flexGrow={1}>{(currentEntry ?? INTRO).name}</Typography>
                     <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ ml: 2 }} onClick={() => Database.sync()}>
                         <SyncIcon />
                     </IconButton>

@@ -54,10 +54,10 @@ export function CreateNoteDialog(props: DialogProps) {
 
         switch (type) {
             case EntryTypes.NOTE:
-                Database.createEntry({ name, parent: props.entry.id, color, type });
+                Database.createEntry({ name, parent: props.entry.id, color, type } as DBEntry);
                 break;
             case EntryTypes.FOLDER:
-                Database.createEntry({ name, parent: props.entry.id, color, type });
+                Database.createEntry({ name, parent: props.entry.id, color, type } as DBEntry);
                 break;
         }
         handleClose();

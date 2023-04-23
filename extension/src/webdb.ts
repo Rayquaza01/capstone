@@ -8,7 +8,6 @@ export enum EntryTypes {
 
 enum SyncActions {
     CREATE,
-    UPDATE,
     DELETE
 }
 
@@ -19,7 +18,7 @@ interface SyncToDoEntry {
 
 export interface DBEntry {
     /** Unique number identifying this folder */
-    id?: number
+    id: number
     /** Unique name identifying this folder. Displayed to user */
     name: string
     /** ID for parent to this folder. 0 if folder is top level */
@@ -43,7 +42,7 @@ export interface UpdateEntry {
 }
 
 export interface TextEntry {
-    id?: number
+    id: number
     contents: string
 
     modified?: Date
@@ -131,7 +130,6 @@ export class NTDatabase extends Dexie {
 
     createText(id: number) {
         const newText = { id, contents: "", modified: new Date() };
-        console.log("New text is ", newText);
 
         this.noteData.put(newText);
 
@@ -153,8 +151,35 @@ export class NTDatabase extends Dexie {
     }
 
     sync() {
+        this.uploadToDo();
+
         this.resolveSync();
         this.resolveSyncText();
+    }
+
+    async uploadToDo() {
+        // get ids for entries to upload
+        const toUpload = (await this.syncToDo.where({ action: SyncActions.CREATE }).toArray()).map(item => item.id);
+        // get the actual entries themselves
+        const toUploadEntries = await this.notes.bulkGet(toUpload) as DBEntry[];
+        // get the text entries that also need to be created
+        const toUploadTextEntries = await this.noteData.bulkGet(
+                toUploadEntries
+                    .filter(item => item.type === EntryTypes.NOTE)
+                    .map(item => item.id as number)
+        ) as TextEntry[];
+        if (toUploadEntries.length > 0) {
+            this.client.createEntry(toUploadEntries);
+        }
+        if (toUploadTextEntries.length > 0) {
+            this.client.createTextEntry(toUploadTextEntries);
+        }
+
+        const toDelete = (await this.syncToDo.where({ action: SyncActions.DELETE }).toArray()).map(item => item.id);
+        if (toDelete.length > 0) {
+            this.client.deleteEntry(toDelete);
+            this.client.deleteTextEntry(toDelete);
+        }
     }
 
     async resolveSyncText() {
