@@ -120,7 +120,7 @@ export function App() {
         dialogHandleOpen(DialogNames.NEW);
     }
 
-    const [settings, setSettings] = React.useState<Settings>({fontSize: 16, spellcheck: true, darkMode: false});
+    // const [settings, setSettings] = React.useState<Settings>({fontSize: 16, spellcheck: true, darkMode: false});
     // const [currentEntry, setCurrentEntry] = React.useState<Notebook>(INTRO);
     const [currentId, setCurrentId] = React.useState(-1);
 
@@ -192,7 +192,7 @@ export function App() {
             </Drawer> */}
 
             <Box>
-                <Editor id={currentEntry?.id} settings={settings} />
+                <Editor id={currentEntry?.id} />
             </Box>
 
             <NoteMenu open={menuOpen} openDialog={dialogHandleOpen} anchor={menuAnchor} handleClose={() => setMenuOpen(false)} selected={menuSelected.type} />

@@ -3,36 +3,11 @@ import ReactQuill from "react-quill";
 
 import browser from "webextension-polyfill";
 
-import Box from "@mui/material/Box"
-import Select from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
-
-import { Settings } from "./SettingsPanel";
 import { Database } from "./webdb";
 
 require("quill/dist/quill.snow.css");
 
-export interface EditorToolbarProps {
-
-}
-
-export function EditorToolbar(props: EditorToolbarProps) {
-    const [size, setSize] = useState<false | string>(false);
-
-    return (
-        <Box id="toolbar">
-            <Select value={size} onChange={e => setSize(e.target.value)} className="ql-size">
-                <MenuItem value="small" />
-                <MenuItem selected />
-                <MenuItem value="large" />
-                <MenuItem value="huge" />
-            </Select>
-        </Box>
-    );
-}
-
 export interface EditorProps {
-    settings: Settings
     id?: number;
 }
 
@@ -66,10 +41,6 @@ export function Editor(props: EditorProps) {
             setContent(value.contents);
         });
     }, [props.id]);
-
-    useEffect(() => {
-        document.querySelector(".ql-editor")?.setAttribute("spellcheck", props.settings.spellcheck.toString());
-    }, [props.settings.spellcheck]);
 
     /* https://github.com/Rayquaza01/note-taker/blob/49ffab4cb77e03dcde12cddf8177c4e4ec3077eb/extension/notes.js#L45 */
     return (
