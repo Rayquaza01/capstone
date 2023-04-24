@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 
 import AppBar from "@mui/material/AppBar";
 import Typography from "@mui/material/Typography";
@@ -7,18 +7,23 @@ import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
 import Button from "@mui/material/Button";
 import Drawer from "@mui/material/Drawer";
+import CssBaseline from "@mui/material/CssBaseline";
 
 import MenuIcon from "@mui/icons-material/Menu";
 import SettingsIcon from "@mui/icons-material/Settings";
 import AddIcon from "@mui/icons-material/Add";
 import SyncIcon from "@mui/icons-material/Sync";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 
 import { NotebookList } from "./NoteSwitcher";
 
 import { CreateNoteDialog, DeleteNoteDialog, RenameNoteDialog, DialogNames, MoveNoteDialog } from "./Dialogs";
 import { NoteMenu } from "./NoteMenu";
 
-import { Settings, SettingsPanel } from "./SettingsPanel";
+import { Settings } from "./SettingsPanel";
 
 import { Editor } from "./Editor";
 
@@ -147,9 +152,16 @@ export function App() {
         return Database.notes.get(currentId);
     }, [currentId], INTRO);
 
-    return (
-        <Box>
+    // https://mui.com/material-ui/customization/dark-mode/
+    const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
+    const theme = useMemo(() =>
+        createTheme({ palette: { mode: prefersDarkMode ? "dark" : "light" } }),
+    [prefersDarkMode]);
 
+    return (
+        <ThemeProvider theme={theme}>
+
+            <CssBaseline />
             <AppBar position="static" style={{ backgroundColor: (currentEntry ?? INTRO).color }}>
                 <Toolbar>
                     <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }} onClick={() => setLOpen(true)}>
@@ -159,9 +171,11 @@ export function App() {
                     <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ ml: 2 }} onClick={() => Database.sync()}>
                         <SyncIcon />
                     </IconButton>
-                    <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ ml: 2 }} onClick={() => setROpen(true)}>
-                        <SettingsIcon />
-                    </IconButton>
+                    <a href="note_ui.html" target="_blank" style={{ color: "inherit "}}>
+                        <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ ml: 2 }}>
+                            <OpenInNewIcon />
+                        </IconButton>
+                    </a>
                 </Toolbar>
             </AppBar>
 
@@ -177,13 +191,16 @@ export function App() {
                 <SettingsPanel settings={settings} setSettings={settingsPanelUpdate} />
             </Drawer> */}
 
-            <Editor id={currentEntry?.id} settings={settings} />
+            <Box>
+                <Editor id={currentEntry?.id} settings={settings} />
+            </Box>
 
             <NoteMenu open={menuOpen} openDialog={dialogHandleOpen} anchor={menuAnchor} handleClose={() => setMenuOpen(false)} selected={menuSelected.type} />
             <CreateNoteDialog open={newNoteDialogOpen} handleClose={dialogHandleClose} entry={menuSelected} />
             <RenameNoteDialog open={renameNoteDialogOpen} handleClose={dialogHandleClose} entry={menuSelected} />
             <DeleteNoteDialog open={deleteNoteDialogOpen} handleClose={dialogHandleClose} entry={menuSelected} />
             <MoveNoteDialog open={moveNoteDialogOpen} handleClose={dialogHandleClose} entry={menuSelected} />
-        </Box>
+
+        </ThemeProvider>
     );
 }
