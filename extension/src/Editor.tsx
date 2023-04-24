@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import ReactQuill from "react-quill";
 
+import browser from "webextension-polyfill";
+
 import Box from "@mui/material/Box"
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
@@ -69,7 +71,8 @@ export function Editor(props: EditorProps) {
         document.querySelector(".ql-editor")?.setAttribute("spellcheck", props.settings.spellcheck.toString());
     }, [props.settings.spellcheck]);
 
+    /* https://github.com/Rayquaza01/note-taker/blob/49ffab4cb77e03dcde12cddf8177c4e4ec3077eb/extension/notes.js#L45 */
     return (
-        <ReactQuill onChange={updateDB} value={content} style={{height: "250px"}} />
+        <ReactQuill onChange={updateDB} value={content} style={{ height: browser.extension.getViews({ type: "popup" }).includes(window) ? "300px" : "inherit" }} />
     );
 }
