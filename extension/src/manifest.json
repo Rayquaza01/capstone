@@ -3,7 +3,7 @@
     "name": "NT",
     "version": "1.0.0",
     "description": "",
-    "applications": {
+    "browser_specific_settings": {
         "gecko": {
             "id": "nt@r01"
         }

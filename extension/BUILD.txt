@@ -1,0 +1,15 @@
+Install Dependencies with `npm install`
+
+Build the production version with `npm run build:prod`
+
+Files will be output to `./dist`
+
+The following third-party files are copied into the build (in `./dist/third-party`):
+
+"node_modules/quill/dist/quill.min.js"
+"node_modules/quill/dist/quill.min.js.map"
+"node_modules/react/umd/react.production.min.js"
+"node_modules/react-dom/umd/react-dom.production.min.js"
+"node_modules/dexie/dist/dexie.min.js"
+"node_modules/dexie-react-hooks/dist/dexie-react-hooks.js"
+"node_modules/webextension-polyfill/dist/browser-polyfill.min.js"
