@@ -46,32 +46,21 @@ module.exports = (env, argv) => {
                     { from: "node_modules/quill/dist/quill.min.js.map", to: "third-party/quill.min.js.map" },
                     { from: "node_modules/react/umd/" + (argv.mode === "production" ? "react.production.min.js" : "react.development.js"), to: "third-party/react.js"},
                     { from: "node_modules/react-dom/umd/" + (argv.mode === "production" ? "react-dom.production.min.js" : "react-dom.development.js"), to: "third-party/react-dom.js"},
-                    { from: "src/manifest.json" }
+                    { from: "node_modules/dexie/dist/dexie.min.js", to: "third-party/dexie.min.js" },
+                    { from: "node_modules/dexie-react-hooks/dist/dexie-react-hooks.js", to: "third-party/dexie-react-hooks.js" },
+                    { from: "node_modules/webextension-polyfill/dist/browser-polyfill.min.js", to: "third-party/browser-polyfill.min.js" },
+                    { from: "src/manifest.json" },
+                    { from: "src/icons/", to: "icons", toType: "dir" }
                 ]
             })
-            // new copyWebpackPlugin({
-            //     patterns: [
-            //         { from: "src/manifest.json" },
-            //         {
-            //             from: "src/icons/",
-            //             to: "icons",
-            //             toType: "dir"
-            //         },
-            //         {
-            //             from: "src/_locales/",
-            //             to: "_locales",
-            //             toType: "dir"
-            //         },
-            //         { from: "node_modules/webextension-polyfill/dist/browser-polyfill.min.js" },
-            //         { from: "node_modules/webextension-polyfill/dist/browser-polyfill.min.js.map" }
-            //     ]
-            // })
         ],
         externals: {
             "webextension-polyfill": "browser",
             "quill": "Quill",
             "react": "React",
             "react-dom": "ReactDOM",
+            "dexie": "Dexie",
+            "dexie-react-hooks": "DexieReactHooks"
         },
         optimization: {
             usedExports: true,
