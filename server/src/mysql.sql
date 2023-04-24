@@ -24,7 +24,7 @@ CREATE TABLE metadata (
 CREATE TABLE data (
     id INT,
     user_id INT,
-    text TEXT CHARACTER SET utf8mb4,
+    contents TEXT CHARACTER SET utf8mb4,
     modified TIMESTAMP,
     PRIMARY KEY (id, user_id)
 );
