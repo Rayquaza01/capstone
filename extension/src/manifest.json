@@ -21,6 +21,14 @@
         "browser_style": false,
         "default_popup": "note_ui.html"
     },
+    "default_icon": "icons/icon.svg",
+    "theme_icons": [
+        {
+            "light": "icons/icon-light.svg",
+            "dark": "icons/icon.svg",
+            "size": 16
+        }
+    ],
     "commands": {
         "_execute_browser_action": {
             "suggested_key": {
