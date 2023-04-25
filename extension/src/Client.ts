@@ -29,8 +29,6 @@ export class Client {
         this.auth = "";
 
         this.limit = 50;
-
-        console.log("Client init");
     }
 
     private async request(endpoint: string, body: string) {
@@ -48,30 +46,27 @@ export class Client {
     }
 
     createEntry(entry: DBEntry[]) {
-        this.request("/api/create", JSON.stringify({ entry }))
-            .then(console.log);
+        return this.request("/api/create", JSON.stringify({ entry }))
     }
 
     createTextEntry(entry: TextEntry[]) {
-        this.request("/api/createText", JSON.stringify({ entry }));
+        return this.request("/api/createText", JSON.stringify({ entry }));
     }
 
     updateEntry(entry: UpdateEntry) {
-        this.request("/api/update", JSON.stringify({ entry }))
-            .then(console.log);
+        return this.request("/api/update", JSON.stringify({ entry }))
     }
 
     updateTextEntry(entry: TextEntry) {
-        this.request("/api/updateText", JSON.stringify({ entry }));
+        return this.request("/api/updateText", JSON.stringify({ entry }));
     }
 
     deleteEntry(id: number[]) {
-        this.request("/api/delete", JSON.stringify({ id }))
-            .then(console.log);
+        return this.request("/api/delete", JSON.stringify({ id }))
     }
 
     deleteTextEntry(id: number[]) {
-        this.request("/api/deleteText", JSON.stringify({ id }));
+        return this.request("/api/deleteText", JSON.stringify({ id }));
     }
 
     getTextEntriesByIDs(ids: number[]) {
